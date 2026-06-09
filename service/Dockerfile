@@ -20,6 +20,6 @@ RUN pip install --no-cache-dir \
 RUN python3 -c "from paddleocr import PaddleOCR; PaddleOCR(use_angle_cls=True, lang='en', use_gpu=False)"
 
 WORKDIR /app
-COPY ocr_service.py .
+COPY card_scanner.py .
 
-CMD ["python3", "ocr_service.py"]
+CMD ["python3", "card_scanner.py"]

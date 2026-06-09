@@ -1,0 +1,3 @@
+google-cloud-storage==3.11.0
+kagglehub
+python-dotenv
