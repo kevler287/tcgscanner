@@ -31,6 +31,7 @@ BACKGROUND_SIZE = (600, 800)
 MAX_ANGLE_DEG   = 10
 MIN_SCALE       = 1.5
 MAX_SCALE       = 3.0
+VAL_SPLIT       = 0.05
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,11 @@ def add_glare(image, corners):
 def add_blur(image):
     k = random.choice([1, 3, 5, 7])
     return cv2.GaussianBlur(image, (k, k), 0)
+
+def add_brightness_contrast(image):
+    alpha = random.uniform(0.6, 1.4)   # contrast
+    beta  = random.randint(-40, 40)    # brightness
+    return cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
 
 
 def paste_on_random_background(card, corners, bg_paths, bg_size):
@@ -177,18 +183,20 @@ def main():
     parser.add_argument("--background-dir",   default=BACKGROUND_DIR)
     parser.add_argument("--output-dir",       default=OUTPUT_DIR)
     parser.add_argument("--samples-per-card", default=SAMPLES_PER_CARD, type=int)
+    parser.add_argument("--val-split",        default=0.05, type=float)
+    parser.add_argument("--test-split",       default=0.05, type=float)
     args = parser.parse_args()
 
-    images_out = Path(args.output_dir) / "images"
-    labels_out = Path(args.output_dir) / "labels"
-    images_out.mkdir(parents=True, exist_ok=True)
-    labels_out.mkdir(parents=True, exist_ok=True)
+    for split in ("train", "val", "test"):
+        (Path(args.output_dir) / "images" / split).mkdir(parents=True, exist_ok=True)
+        (Path(args.output_dir) / "labels" / split).mkdir(parents=True, exist_ok=True)
 
     (Path(args.output_dir) / "classes.txt").write_text("ygo_card\n")
     (Path(args.output_dir) / "data.yaml").write_text(
         f"path: {Path(args.output_dir).resolve()}\n"
-        f"train: images/\n"
-        f"val: images/\n"
+        f"train: images/train/\n"
+        f"val: images/val/\n"
+        f"test: images/test/\n"
         f"\n"
         f"nc: 1\n"
         f"names:\n"
@@ -199,9 +207,17 @@ def main():
                  list(Path(args.card_dir).rglob("*.jpeg")) + \
                  list(Path(args.card_dir).rglob("*.png"))
 
+    random.shuffle(card_paths)
+    val_count  = int(len(card_paths) * args.val_split)
+    test_count = int(len(card_paths) * args.test_split)
+    val_cards  = set(str(p) for p in card_paths[:val_count])
+    test_cards = set(str(p) for p in card_paths[val_count:val_count + test_count])
+
     bg_paths = load_background_paths(args.background_dir)
 
-    logger.info("Found %d cards, %d backgrounds", len(card_paths), len(bg_paths))
+    logger.info("Found %d cards (%d train / %d val / %d test), %d backgrounds",
+                len(card_paths), len(card_paths) - val_count - test_count,
+                val_count, test_count, len(bg_paths))
     logger.info("Generating %d samples per card → %d total",
                 args.samples_per_card, len(card_paths) * args.samples_per_card)
 
@@ -212,6 +228,13 @@ def main():
             if card is None:
                 logger.warning("Could not load %s, skipping.", card_path)
                 continue
+
+            if str(card_path) in val_cards:
+                split = "val"
+            elif str(card_path) in test_cards:
+                split = "test"
+            else:
+                split = "train"
 
             for i in range(args.samples_per_card):
                 scale = random.uniform(MIN_SCALE, MAX_SCALE)
@@ -228,12 +251,13 @@ def main():
                     warped, corners, bg_paths, BACKGROUND_SIZE
                 )
                 composite = add_blur(composite)
+                composite = add_brightness_contrast(composite)
 
                 label = generate_yolo_label(corners, (ox, oy), BACKGROUND_SIZE)
 
                 stem = f"{card_path.stem}_{i:04d}"
-                cv2.imwrite(str(images_out / f"{stem}.jpg"), composite)
-                (labels_out / f"{stem}.txt").write_text(label + "\n")
+                cv2.imwrite(str(Path(args.output_dir) / "images" / split / f"{stem}.jpg"), composite)
+                (Path(args.output_dir) / "labels" / split / f"{stem}.txt").write_text(label + "\n")
 
                 pbar.update(1)
 
