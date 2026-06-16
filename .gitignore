@@ -1,5 +1,7 @@
 credentials/
 data_platform/transform/output/
+runs/
+yolo11n-seg.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -29,8 +29,6 @@ np.random.seed(RANDOM_SEED)
 
 BACKGROUND_SIZE = (600, 800)
 MAX_ANGLE_DEG   = 10
-MIN_SCALE       = 1.5
-MAX_SCALE       = 3.0
 VAL_SPLIT       = 0.05
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -96,7 +94,7 @@ def add_glare(image, corners):
 
 
 def add_blur(image):
-    k = random.choice([1, 3, 5, 7])
+    k = random.choice([1, 3, 5])
     return cv2.GaussianBlur(image, (k, k), 0)
 
 def add_brightness_contrast(image):
@@ -110,19 +108,22 @@ def paste_on_random_background(card, corners, bg_paths, bg_size):
     bg_w, bg_h = bg_size
     h, w = card.shape[:2]
 
-    x_min = -int(w / 2)
-    x_max = bg_w - int(w * 0.9)
-    if x_max < x_min:
-        x = x_max
-    else:
-        x = random.randint(x_min, x_max)
+    # x_min = -int(w / 2)
+    # x_max = bg_w - int(w * 0.9)
+    # if x_max < x_min:
+    #     x = x_max
+    # else:
+    #     x = random.randint(x_min, x_max)
 
-    y_min = -int(h / 2)
-    y_max = bg_h - int(h * 0.8)
-    if y_max < y_min:
-        y = int((y_max+y_min)/2)
-    else:
-        y = random.randint(-int(h / 2), bg_h - int(h * 0.8))
+    # y_min = -int(h / 2)
+    # y_max = bg_h - int(h * 0.8)
+    # if y_max < y_min:
+    #     y = int((y_max+y_min)/2)
+    # else:
+    #     y = random.randint(-int(h / 2), bg_h - int(h * 0.8))
+
+    x = random.randint(0, bg_w-w)
+    y = random.randint(0, bg_h-h)
 
     mask = np.zeros((h, w), dtype=np.uint8)
     cv2.fillPoly(mask, [corners.astype(np.int32)], 255)
@@ -160,18 +161,10 @@ def generate_yolo_label(corners, offset, bg_size):
     pts[:, 0] += ox
     pts[:, 1] += oy
 
-    card_poly  = pts.astype(np.float32)
-    image_poly = np.array(
-        [[0, 0], [bg_w, 0], [bg_w, bg_h], [0, bg_h]], dtype=np.float32
-    )
+    pts[:, 0] /= bg_w
+    pts[:, 1] /= bg_h
 
-    _, intersection = cv2.intersectConvexConvex(card_poly, image_poly)
-    clipped = intersection.reshape(-1, 2)
-
-    clipped[:, 0] /= bg_w
-    clipped[:, 1] /= bg_h
-
-    coords = " ".join(f"{v:.6f}" for pt in clipped for v in pt)
+    coords = " ".join(f"{v:.6f}" for pt in pts for v in pt)
     return f"0 {coords}"
 
 
@@ -237,7 +230,8 @@ def main():
                 split = "train"
 
             for i in range(args.samples_per_card):
-                scale = random.uniform(MIN_SCALE, MAX_SCALE)
+                size_ratio = min(BACKGROUND_SIZE[1]/card.shape[0], BACKGROUND_SIZE[0]/card.shape[1])
+                scale = random.uniform(size_ratio*0.6, size_ratio*0.9)
                 card_resized = cv2.resize(
                     card,
                     (int(card.shape[1] * scale), int(card.shape[0] * scale))
