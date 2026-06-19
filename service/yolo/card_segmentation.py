@@ -1,19 +1,21 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
-import math
+
+from service.card_configs.card_config import CardConfig
 
 class CardSegmentor:
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str, ygo_config: CardConfig):
         self.model = YOLO(model_path)
         self.model.to("cuda")
+        self.ygo_config = ygo_config
 
     def segment_and_warp(self, frame: np.ndarray) -> np.ndarray | None:
 
-        results = self.model(frame)
+        results = self.model(frame)[0]
 
         if results.masks is None:
-            return None
+            return None, None
         
         for i, (mask, box) in enumerate(zip(results.masks.xy, results.boxes)):
             pts = mask.astype(np.int32)
@@ -26,27 +28,20 @@ class CardSegmentor:
             approx = cv2.approxPolyDP(hull, epsilon, True)
 
             if len(approx) != 4:
-                continue
+                return None, approx
 
             approx = approx.reshape(4, 2) # (4, 1, 2) -> (4, 2)
-            sorted = self._sort_pts(approx)
+            sorted_pts = self._sort_pts(approx)
 
-            M = self._get_transform_matrix(pts=sorted)
-            return cv2.warpPerspective(frame, M, (590,860))
-
-    def _get_transform_matrix(self, pts: np.ndarray):
-        dist_a = max(math.dist(pts[0], pts[1]), math.dist(pts[2], pts[3]))
-        dist_b = max(math.dist(pts[0], pts[3]), math.dist(pts[1], pts[2]))
-        if dist_a < dist_b:
-            w, h = dist_a, dist_b
-        else:
-            w, h = dist_b, dist_a
+            h_out = self.ygo_config.h
+            w_out = self.ygo_config.w
+            out_pts = np.float32([[0, 0], [0, h_out - 1], [w_out - 1, h_out - 1], [w_out - 1, 0]])
+            M = cv2.getPerspectiveTransform(sorted_pts, out_pts)
+            return cv2.warpPerspective(frame, M, (w_out, h_out)), sorted_pts
         
-        in_pts = pts
-        out_pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]])
-        return cv2.getPerspectiveTransform(in_pts, out_pts)
+        return None, None
     
-    def _sort_pts(pts):
+    def _sort_pts(self, pts):
         s = pts.sum(axis=1) # x+y per point
         diff = np.diff(pts, axis=1) #x-y per point
         return np.float32([

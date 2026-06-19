@@ -1,34 +1,33 @@
 import cv2
 import numpy as np
-from ultralytics import YOLO
+from service.card_configs.card_config import CardConfig
+from service.yolo.card_segmentation import CardSegmentor
 
-MODEL_PATH = "runs/segment/seg_v2-2/weights/best.pt"
-CONF       = 0.5
-
-model  = YOLO(MODEL_PATH)
-cap = cv2.VideoCapture("/home/kevin/Downloads/test2.mp4")
+ygo_config = CardConfig.load("service/card_configs/ygo_card.json")
+card_seg = CardSegmentor(model_path="service/yolo/best.pt", ygo_config=ygo_config)
+cap = cv2.VideoCapture("/home/kevin/Downloads/packopening1.mp4")
 cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
 
 while True:
     _, img = cap.read()
-    print(img.shape)
-    results = model(img, conf=CONF)[0]
+    warped, sorted_pts = card_seg.segment_and_warp(img)
 
-    if results.masks is None:
-        cv2.putText(img, "No detections", (20,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
-    else:
-        for i, (mask, box) in enumerate(zip(results.masks.xy, results.boxes)):
-            pts     = mask.astype(np.int32)
-            epsilon = 0.02 * cv2.arcLength(pts.reshape(-1, 1, 2), True)
-            approx  = cv2.approxPolyDP(pts.reshape(-1, 1, 2), epsilon, True)
+    if sorted_pts is not None:
+        cv2.polylines(img, [sorted_pts.astype(np.int32)], isClosed=True, color=(0, 255, 0), thickness=5)
 
-            cv2.polylines(img, [approx], True, (0, 255, 0), 2)
-            for pt in approx.reshape(-1, 2):
-                cv2.circle(img, tuple(pt), 5, (0, 0, 255), -1)
+    scale = ygo_config.h / img.shape[0]
+    w_scaled = int(img.shape[1] * scale)
+    img_resized = cv2.resize(img, (w_scaled, ygo_config.h))
 
-    cv2.imshow("Inference  –  [N] Next  [Q] Quit", img)
+    if warped is None:
+        warped = np.zeros((card_seg.ygo_config.h, card_seg.ygo_config.w, 3), dtype=np.uint8)
+
+    combined = np.hstack([img_resized, warped])
+    cv2.imshow("Inference  –  [N] Next  [Q] Quit", combined)
+
     key = cv2.waitKey(0) & 0xFF
     if key == ord('q'):
         break
 
+cap.release()
 cv2.destroyAllWindows()
