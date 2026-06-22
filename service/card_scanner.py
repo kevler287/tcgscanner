@@ -1,8 +1,10 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File
 from contextlib import asynccontextmanager
-from service.card_configs.card_config import CardConfig
-from service.yolo.card_segmentation import CardSegmentor
-from service.ocr.text_extraction import TextExtractor
+from card_configs.card_config import CardConfig
+from yolo.card_segmentation import CardSegmentor
+from ocr.text_extraction import TextExtractor
+import cv2
+import numpy as np
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,7 +24,29 @@ async def readiness(request: Request):
     return {"status": "ready"}
 
 @app.post("/scan")
-async def scan(request: Request):
+async def scan(request: Request, file: UploadFile = File(...)):
     if not request.app.state.ready:
         raise HTTPException(status_code=503, detail="Models loading")
     
+    # Load image from multipart
+    contents = await file.read()
+    np_arr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    
+    if img is None:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+    
+    warped, sorted_pts = request.app.state.segmentor.segment_and_warp(img)
+    
+    if warped is None:
+        return {
+            "text": None,
+            "pts": sorted_pts.tolist() if sorted_pts is not None else None
+        }
+    
+    text = request.app.state.ocr.extract(card_image=warped)
+    
+    return {
+        "text": text,
+        "pts": sorted_pts.tolist() if sorted_pts is not None else None
+    }

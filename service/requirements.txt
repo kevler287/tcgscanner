@@ -1,6 +1,6 @@
 paddleocr==2.7.3
-opencv-python-headless==4.13.0.92
-numpy<2.0
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
 ultralytics==8.4.67
 fastapi==0.138.0
 uvicorn[standard]

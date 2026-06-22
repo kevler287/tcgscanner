@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
-from service.card_configs.card_config import CardConfig
+from card_configs.card_config import CardConfig
 
 class CardSegmentor:
     def __init__(self, model_path: str, ygo_config: CardConfig):
