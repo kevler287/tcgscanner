@@ -1,5 +1,4 @@
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
-
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
@@ -9,17 +8,28 @@ RUN apt-get update && apt-get install -y \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Paddle separately due to custom index URL
 RUN pip install --no-cache-dir \
     paddlepaddle-gpu==2.6.2 \
-    paddleocr==2.7.3 \
-    opencv-python-headless \
-    "numpy<2.0" \
     -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
 
-# Pre-download PaddleOCR models during build so they're cached in the image
-RUN python3 -c "from paddleocr import PaddleOCR; PaddleOCR(use_angle_cls=True, lang='en', use_gpu=False)"
+# Install remaining dependencies via requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Cache PaddleOCR models at build time
+RUN python3 -c "\
+    from paddleocr import PaddleOCR; \
+    PaddleOCR(use_angle_cls=True, lang='en', use_gpu=False)"
+
+# Cache YOLO dependencies at build time
+# (ultralytics downloads additional dependencies on first YOLO() call)
+RUN python3 -c "from ultralytics import YOLO"
 
 WORKDIR /app
-COPY card_scanner.py .
+COPY service/ .
 
-CMD ["python3", "card_scanner.py"]
+HEALTHCHECK --interval=5s --timeout=3s --start-period=60s \
+    CMD curl -f http://localhost:8000/health/ready || exit 1
+
+CMD ["uvicorn", "card_scanner:app", "--host", "0.0.0.0", "--port", "8000"]

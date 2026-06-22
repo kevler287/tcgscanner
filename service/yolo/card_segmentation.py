@@ -12,7 +12,7 @@ class CardSegmentor:
 
     def segment_and_warp(self, frame: np.ndarray) -> np.ndarray | None:
 
-        results = self.model(frame)[0]
+        results = self.model(frame, conf=0.5)[0]
 
         if results.masks is None:
             return None, None

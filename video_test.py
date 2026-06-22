@@ -4,8 +4,8 @@ from service.card_configs.card_config import CardConfig
 from service.yolo.card_segmentation import CardSegmentor
 
 ygo_config = CardConfig.load("service/card_configs/ygo_card.json")
-card_seg = CardSegmentor(model_path="service/yolo/best.pt", ygo_config=ygo_config)
-cap = cv2.VideoCapture("/home/kevin/Downloads/packopening1.mp4")
+card_seg = CardSegmentor(model_path="service/yolo/v1.pt", ygo_config=ygo_config)
+cap = cv2.VideoCapture("/home/kevin/Downloads/test.mp4")
 cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
 
 while True:
