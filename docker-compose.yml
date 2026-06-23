@@ -1,6 +1,8 @@
 services:
-  ocr:
-    build: ./service
+  app:
+    build:
+      context: .
+      dockerfile: service/Dockerfile
     ports:
       - "8000:8000"
     deploy:

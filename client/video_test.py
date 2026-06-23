@@ -1,11 +1,24 @@
+import json
+import os
+
 import cv2
+from pathlib import Path
 import numpy as np
 import httpx
 
 SERVICE_URL = "http://localhost:8000"
+CONFIG_PATH = os.path.join(Path(__file__).parent.parent, "shared/ygo_config.json")
 
 cap = cv2.VideoCapture("/home/kevin/Downloads/test3.mp4")
 cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
+
+with open(CONFIG_PATH, "r") as f:
+    data = json.load(f)
+response = httpx.post(
+    f"{SERVICE_URL}/configure",
+    json=data
+)
+response.raise_for_status()
 
 while True:
     ret, img = cap.read()

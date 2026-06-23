@@ -2,13 +2,13 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
-from card_configs.card_config import CardConfig
+from shared.tcg_config import TCGConfig
 
 class CardSegmentor:
-    def __init__(self, model_path: str, ygo_config: CardConfig):
+    def __init__(self, model_path: str, tcg_config: TCGConfig):
         self.model = YOLO(model_path)
         self.model.to("cuda")
-        self.ygo_config = ygo_config
+        self.ygo_config = tcg_config
 
     def segment_and_warp(self, frame: np.ndarray) -> np.ndarray | None:
 
@@ -33,8 +33,8 @@ class CardSegmentor:
             approx = approx.reshape(4, 2) # (4, 1, 2) -> (4, 2)
             sorted_pts = self._sort_pts(approx)
 
-            h_out = self.ygo_config.h
-            w_out = self.ygo_config.w
+            h_out = self.ygo_config.card_h
+            w_out = self.ygo_config.card_w
             out_pts = np.float32([[0, 0], [0, h_out - 1], [w_out - 1, h_out - 1], [w_out - 1, 0]])
             M = cv2.getPerspectiveTransform(sorted_pts, out_pts)
             return cv2.warpPerspective(frame, M, (w_out, h_out)), sorted_pts

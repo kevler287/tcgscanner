@@ -1,7 +1,8 @@
 {
-    "w": 590,
-    "h": 860,
-    "ocr": {
+    "tcg": "ygo",
+    "card_w": 590,
+    "card_h": 860,
+    "ocr_fields": {
         "set_code": {
             "position": [[0.7, 0.7], [1.0, 0.76]],
             "forget_rate": 0.7,

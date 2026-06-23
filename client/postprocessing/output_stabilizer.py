@@ -1,13 +1,13 @@
 from pydantic import BaseModel, Field
 from typing import Dict
-from service.card_configs.card_config import CardConfig
+from shared.tcg_config import TCGConfig
 
-class CardStabilizer:
+class OutputStabilizer:
 
-    def __init__(self, card_config: CardConfig):
-        self.card_config = card_config
+    def __init__(self, tcg_config: TCGConfig):
+        self.card_config = tcg_config
         self.text_stabilizers = {}
-        for field, cfg in self.card_config.ocr.items():
+        for field, cfg in self.card_config.ocr_fields.items():
             self.text_stabilizers[field] = TextStabilizer(
                 forget_rate=cfg.forget_rate,
                 stability_factor=cfg.stability_rate
