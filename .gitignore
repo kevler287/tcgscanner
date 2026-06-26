@@ -1,5 +1,5 @@
 credentials/
-data_platform/transform/output/
+data_platform/etl/output/
 runs/
 yolo11n-seg.pt
 

@@ -15,6 +15,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 BUCKET_NAME = os.getenv("GCS_BUCKET")
+GCS_CARDS_PREFIX = os.getenv("GCS_CARDS_PREFIX")
+GCS_BG_PREFIX    = os.getenv("GCS_BG_PREFIX")
+
 client = storage.Client()
 bucket = client.bucket(BUCKET_NAME)
 
@@ -70,8 +73,8 @@ if __name__ == "__main__":
 
     # ygo card templates
     dataset_dir = download_dataset(source_path="yelbuzz/yugioh-card-images-and-data")
-    upload_images(dataset_dir, bucket_prefix="raw/ygo_cards/")
+    upload_images(dataset_dir, bucket_prefix=GCS_CARDS_PREFIX)
 
     # background images
     dataset_dir = download_dataset(source_path="haaroonafroz/material-dataset-new")
-    upload_images(dataset_dir, bucket_prefix="raw/backgrounds/")
+    upload_images(dataset_dir, bucket_prefix=GCS_BG_PREFIX)

@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-CARD_DIR         = "/home/kevin/.cache/kagglehub/datasets/yelbuzz/yugioh-card-images-and-data/versions/3/YuGiOhImages/images"
-BACKGROUND_DIR   = "/home/kevin/.cache/kagglehub/datasets/haaroonafroz/JPEGImages"
-OUTPUT_DIR       = "data_platform/transform/output"
+LOCAL_CARDS_DIR  = Path(os.getenv("LOCAL_CARDS_DIR"))
+LOCAL_BG_DIR     = Path(os.getenv("LOCAL_BG_DIR"))
+OUTPUT_DIR       = "data_platform/etl/output"
 SAMPLES_PER_CARD = 3
 RANDOM_SEED      = int(os.getenv("RANDOM_SEED"))
 
@@ -172,21 +172,18 @@ def generate_yolo_label(corners, offset, bg_size):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--card-dir",         default=CARD_DIR)
-    parser.add_argument("--background-dir",   default=BACKGROUND_DIR)
-    parser.add_argument("--output-dir",       default=OUTPUT_DIR)
     parser.add_argument("--samples-per-card", default=SAMPLES_PER_CARD, type=int)
     parser.add_argument("--val-split",        default=0.05, type=float)
     parser.add_argument("--test-split",       default=0.05, type=float)
     args = parser.parse_args()
 
     for split in ("train", "val", "test"):
-        (Path(args.output_dir) / "images" / split).mkdir(parents=True, exist_ok=True)
-        (Path(args.output_dir) / "labels" / split).mkdir(parents=True, exist_ok=True)
+        (Path(OUTPUT_DIR) / "images" / split).mkdir(parents=True, exist_ok=True)
+        (Path(OUTPUT_DIR) / "labels" / split).mkdir(parents=True, exist_ok=True)
 
-    (Path(args.output_dir) / "classes.txt").write_text("ygo_card\n")
-    (Path(args.output_dir) / "data.yaml").write_text(
-        f"path: {Path(args.output_dir).resolve()}\n"
+    (Path(OUTPUT_DIR) / "classes.txt").write_text("ygo_card\n")
+    (Path(OUTPUT_DIR) / "data.yaml").write_text(
+        f"path: {Path(OUTPUT_DIR).resolve()}\n"
         f"train: images/train/\n"
         f"val: images/val/\n"
         f"test: images/test/\n"
@@ -196,9 +193,9 @@ def main():
         f"  0: ygo_card\n"
     )
 
-    card_paths = list(Path(args.card_dir).rglob("*.jpg")) + \
-                 list(Path(args.card_dir).rglob("*.jpeg")) + \
-                 list(Path(args.card_dir).rglob("*.png"))
+    card_paths = list(Path(LOCAL_CARDS_DIR).rglob("*.jpg")) + \
+                 list(Path(LOCAL_CARDS_DIR).rglob("*.jpeg")) + \
+                 list(Path(LOCAL_CARDS_DIR).rglob("*.png"))
 
     random.shuffle(card_paths)
     val_count  = int(len(card_paths) * args.val_split)
@@ -206,7 +203,7 @@ def main():
     val_cards  = set(str(p) for p in card_paths[:val_count])
     test_cards = set(str(p) for p in card_paths[val_count:val_count + test_count])
 
-    bg_paths = load_background_paths(args.background_dir)
+    bg_paths = load_background_paths(LOCAL_BG_DIR)
 
     logger.info("Found %d cards (%d train / %d val / %d test), %d backgrounds",
                 len(card_paths), len(card_paths) - val_count - test_count,
@@ -250,12 +247,12 @@ def main():
                 label = generate_yolo_label(corners, (ox, oy), BACKGROUND_SIZE)
 
                 stem = f"{card_path.stem}_{i:04d}"
-                cv2.imwrite(str(Path(args.output_dir) / "images" / split / f"{stem}.jpg"), composite)
-                (Path(args.output_dir) / "labels" / split / f"{stem}.txt").write_text(label + "\n")
+                cv2.imwrite(str(Path(OUTPUT_DIR) / "images" / split / f"{stem}.jpg"), composite)
+                (Path(OUTPUT_DIR) / "labels" / split / f"{stem}.txt").write_text(label + "\n")
 
                 pbar.update(1)
 
-    logger.info("Done. Output: %s", args.output_dir)
+    logger.info("Done. Output: %s", OUTPUT_DIR)
 
 
 if __name__ == "__main__":
