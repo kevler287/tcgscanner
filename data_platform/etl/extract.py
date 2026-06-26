@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from google.cloud import storage
+from data_platform.config import CONFIG
 
 load_dotenv()
 
@@ -12,9 +13,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BUCKET_NAME      = os.getenv("GCS_BUCKET")
-GCS_CARDS_PREFIX = os.getenv("GCS_CARDS_PREFIX")
-GCS_BG_PREFIX    = os.getenv("GCS_BG_PREFIX")
 LOCAL_CARDS_DIR  = Path(os.getenv("LOCAL_CARDS_DIR"))
 LOCAL_BG_DIR     = Path(os.getenv("LOCAL_BG_DIR"))
 
@@ -44,10 +42,10 @@ def download_from_gcs(bucket, prefix: str, local_dir: Path):
 
 def extract():
     client = storage.Client()
-    bucket = client.bucket(BUCKET_NAME)
+    bucket = client.bucket(CONFIG.bucket.name)
 
-    download_from_gcs(bucket, GCS_CARDS_PREFIX, LOCAL_CARDS_DIR)
-    download_from_gcs(bucket, GCS_BG_PREFIX,    LOCAL_BG_DIR)
+    download_from_gcs(bucket, CONFIG.bucket.ygo_prefix, LOCAL_CARDS_DIR)
+    download_from_gcs(bucket, CONFIG.bucket.background_prefix,    LOCAL_BG_DIR)
 
 
 if __name__ == "__main__":

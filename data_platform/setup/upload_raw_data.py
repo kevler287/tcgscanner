@@ -1,12 +1,8 @@
-import os
 import logging
 from pathlib import Path
-
 import kagglehub
-from dotenv import load_dotenv
 from google.cloud import storage
-
-load_dotenv()
+from data_platform.config import CONFIG
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,12 +10,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BUCKET_NAME = os.getenv("GCS_BUCKET")
-GCS_CARDS_PREFIX = os.getenv("GCS_CARDS_PREFIX")
-GCS_BG_PREFIX    = os.getenv("GCS_BG_PREFIX")
-
 client = storage.Client()
-bucket = client.bucket(BUCKET_NAME)
+bucket = client.bucket(CONFIG.bucket.name)
 
 def download_dataset(source_path: str) -> Path:
     logger.info("Downloading dataset from Kaggle: %s", source_path)
@@ -73,8 +65,8 @@ if __name__ == "__main__":
 
     # ygo card templates
     dataset_dir = download_dataset(source_path="yelbuzz/yugioh-card-images-and-data")
-    upload_images(dataset_dir, bucket_prefix=GCS_CARDS_PREFIX)
+    upload_images(dataset_dir, bucket_prefix=CONFIG.bucket.ygo_prefix)
 
     # background images
     dataset_dir = download_dataset(source_path="haaroonafroz/material-dataset-new")
-    upload_images(dataset_dir, bucket_prefix=GCS_BG_PREFIX)
+    upload_images(dataset_dir, bucket_prefix=CONFIG.bucket.background_prefix)

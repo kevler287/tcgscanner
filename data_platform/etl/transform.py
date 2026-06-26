@@ -6,6 +6,7 @@ import argparse
 import logging
 from tqdm import tqdm
 from dotenv import load_dotenv
+from data_platform.config import CONFIG
 import os
 
 load_dotenv()
@@ -22,14 +23,14 @@ LOCAL_CARDS_DIR  = Path(os.getenv("LOCAL_CARDS_DIR"))
 LOCAL_BG_DIR     = Path(os.getenv("LOCAL_BG_DIR"))
 OUTPUT_DIR       = "data_platform/etl/output"
 SAMPLES_PER_CARD = 3
-RANDOM_SEED      = int(os.getenv("RANDOM_SEED"))
+RANDOM_SEED      = CONFIG.random_seed
+BACKGROUND_SIZE = (600, 800)
+MAX_ANGLE_DEG   = 10
+VAL_SPLIT       = 0.05
 
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
-BACKGROUND_SIZE = (600, 800)
-MAX_ANGLE_DEG   = 10
-VAL_SPLIT       = 0.05
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -1,17 +1,12 @@
-import os
 import logging
-from dotenv import load_dotenv
 from google.cloud import bigquery
-
-load_dotenv()
+from data_platform.config import CONFIG
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-BQ_DATASET = os.getenv("BQ_DATASET", "model_results")
 
 MODEL_RUNS_SCHEMA = [
     bigquery.SchemaField("model_type",       "STRING",    mode="REQUIRED"),
@@ -60,7 +55,7 @@ TRAINING_EPOCHS_SCHEMA = [
 
 
 def create_dataset(client: bigquery.Client):
-    dataset_id = f"{client.project}.{BQ_DATASET}"
+    dataset_id = f"{client.project}.{CONFIG.model_results_dataset.name}"
     dataset    = bigquery.Dataset(dataset_id)
     dataset.location = "EU"
 
@@ -72,7 +67,7 @@ def create_dataset(client: bigquery.Client):
 
 
 def create_table(client: bigquery.Client, table_name: str, schema: list):
-    table_id = f"{client.project}.{BQ_DATASET}.{table_name}"
+    table_id = f"{client.project}.{CONFIG.model_results_dataset.name}.{table_name}"
     table    = bigquery.Table(table_id, schema=schema)
 
     try:
@@ -86,8 +81,8 @@ def setup():
     client = bigquery.Client()
 
     create_dataset(client)
-    create_table(client, "model_runs",       MODEL_RUNS_SCHEMA)
-    create_table(client, "training_epochs",  TRAINING_EPOCHS_SCHEMA)
+    create_table(client, CONFIG.model_results_dataset.model_runs_table,       MODEL_RUNS_SCHEMA)
+    create_table(client, CONFIG.model_results_dataset.traing_epoch_table,  TRAINING_EPOCHS_SCHEMA)
 
     logger.info("BigQuery setup complete.")
 
