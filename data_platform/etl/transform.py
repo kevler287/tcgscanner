@@ -2,7 +2,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 import random
-import argparse
 import logging
 from tqdm import tqdm
 from dotenv import load_dotenv
@@ -21,12 +20,14 @@ logger = logging.getLogger(__name__)
 
 LOCAL_CARDS_DIR  = Path(os.getenv("LOCAL_CARDS_DIR"))
 LOCAL_BG_DIR     = Path(os.getenv("LOCAL_BG_DIR"))
-OUTPUT_DIR       = "data_platform/etl/output"
-SAMPLES_PER_CARD = 3
+OUTPUT_DIR       = CONFIG.transform.output_dir
+SAMPLES_PER_CARD = CONFIG.transform.samples_per_card
 RANDOM_SEED      = CONFIG.random_seed
-BACKGROUND_SIZE = (600, 800)
-MAX_ANGLE_DEG   = 10
-VAL_SPLIT       = 0.05
+BACKGROUND_SIZE = CONFIG.transform.background_size
+MAX_ANGLE_DEG   = CONFIG.transform.max_angle_deg
+VAL_SPLIT       = CONFIG.transform.val_split
+TEST_SPLIT      = CONFIG.transform.test_split
+EMPTY_SPLIT     = CONFIG.transform.empty_split
 
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
@@ -172,11 +173,17 @@ def generate_yolo_label(corners, offset, bg_size):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--samples-per-card", default=SAMPLES_PER_CARD, type=int)
-    parser.add_argument("--val-split",        default=0.05, type=float)
-    parser.add_argument("--test-split",       default=0.05, type=float)
-    args = parser.parse_args()
+    card_paths = list(Path(LOCAL_CARDS_DIR).rglob("*.jpg")) + \
+                 list(Path(LOCAL_CARDS_DIR).rglob("*.jpeg")) + \
+                 list(Path(LOCAL_CARDS_DIR).rglob("*.png"))
+
+    bg_paths = load_background_paths(LOCAL_BG_DIR)
+
+    empty_count    = int(len(card_paths) * SAMPLES_PER_CARD * EMPTY_SPLIT)
+    expected_total = len(card_paths) * SAMPLES_PER_CARD + empty_count
+
+    if is_transform_done(Path(OUTPUT_DIR), expected_total):
+        return
 
     for split in ("train", "val", "test"):
         (Path(OUTPUT_DIR) / "images" / split).mkdir(parents=True, exist_ok=True)
@@ -194,26 +201,20 @@ def main():
         f"  0: ygo_card\n"
     )
 
-    card_paths = list(Path(LOCAL_CARDS_DIR).rglob("*.jpg")) + \
-                 list(Path(LOCAL_CARDS_DIR).rglob("*.jpeg")) + \
-                 list(Path(LOCAL_CARDS_DIR).rglob("*.png"))
-
     random.shuffle(card_paths)
-    val_count  = int(len(card_paths) * args.val_split)
-    test_count = int(len(card_paths) * args.test_split)
+    val_count  = int(len(card_paths) * VAL_SPLIT)
+    test_count = int(len(card_paths) * TEST_SPLIT)
     val_cards  = set(str(p) for p in card_paths[:val_count])
     test_cards = set(str(p) for p in card_paths[val_count:val_count + test_count])
-
-    bg_paths = load_background_paths(LOCAL_BG_DIR)
 
     logger.info("Found %d cards (%d train / %d val / %d test), %d backgrounds",
                 len(card_paths), len(card_paths) - val_count - test_count,
                 val_count, test_count, len(bg_paths))
-    logger.info("Generating %d samples per card → %d total",
-                args.samples_per_card, len(card_paths) * args.samples_per_card)
+    logger.info("Generating %d samples per card + %d empty → %d total",
+                SAMPLES_PER_CARD, empty_count, expected_total)
 
-    total = len(card_paths) * args.samples_per_card
-    with tqdm(total=total, unit="sample") as pbar:
+    total = len(card_paths) * SAMPLES_PER_CARD
+    with tqdm(total=expected_total, unit="sample") as pbar:
         for card_path in card_paths:
             card = cv2.imread(str(card_path))
             if card is None:
@@ -227,7 +228,7 @@ def main():
             else:
                 split = "train"
 
-            for i in range(args.samples_per_card):
+            for i in range(SAMPLES_PER_CARD):
                 size_ratio = min(BACKGROUND_SIZE[1]/card.shape[0], BACKGROUND_SIZE[0]/card.shape[1])
                 scale = random.uniform(size_ratio*0.6, size_ratio*0.9)
                 card_resized = cv2.resize(
@@ -253,7 +254,28 @@ def main():
 
                 pbar.update(1)
 
+        # Generate empty samples
+        for i in range(empty_count):
+            bg = load_random_background(bg_paths, BACKGROUND_SIZE)
+            stem  = f"empty_{i:04d}"
+            split = "train"  # all empty samples go to train
+            cv2.imwrite(str(Path(OUTPUT_DIR) / "images" / split / f"{stem}.jpg"), bg)
+            (Path(OUTPUT_DIR) / "labels" / split / f"{stem}.txt").write_text("")
+            pbar.update(1)
+
     logger.info("Done. Output: %s", OUTPUT_DIR)
+
+
+def is_transform_done(output_dir: Path, expected_total: int) -> bool:
+    existing = (
+        len(list((output_dir / "images/train").glob("*.jpg"))) +
+        len(list((output_dir / "images/val").glob("*.jpg"))) +
+        len(list((output_dir / "images/test").glob("*.jpg")))
+    )
+    if existing == expected_total:
+        logger.info("Transform already done (%d samples found), skipping.", existing)
+        return True
+    return False
 
 
 if __name__ == "__main__":

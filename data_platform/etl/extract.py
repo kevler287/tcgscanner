@@ -39,14 +39,12 @@ def download_from_gcs(bucket, prefix: str, local_dir: Path):
 
     logger.info("Download complete: %d files → %s", len(blobs), local_dir)
 
-
-def extract():
+def main():
     client = storage.Client()
     bucket = client.bucket(CONFIG.bucket.name)
 
     download_from_gcs(bucket, CONFIG.bucket.ygo_prefix, LOCAL_CARDS_DIR)
     download_from_gcs(bucket, CONFIG.bucket.background_prefix,    LOCAL_BG_DIR)
 
-
 if __name__ == "__main__":
-    extract()
+    main()
