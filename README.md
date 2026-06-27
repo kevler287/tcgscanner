@@ -6,7 +6,7 @@ A synthetic training dataset is generated programmatically from 10,000+ high-res
 
 The data platform is built on Google Cloud, using GCS as a data lake for raw assets and model artifacts, BigQuery for experiment tracking and training metrics, and Prefect for pipeline orchestration. The service runs in a Dockerized microservice with GPU acceleration via CUDA, exposed via a REST API.
 
-Tech Stack: Python · PyTorch · YOLOv11 · OpenCV · PaddleOCR · Docker · Google Cloud Storage · BigQuery · Prefect · CUDA · ONNX Runtime
+*Tech Stack*: Python · PyTorch · YOLOv11 · OpenCV · PaddleOCR · Docker · Google Cloud Storage · BigQuery · Prefect · CUDA · ONNX Runtime
 
 ## Requirements
 
