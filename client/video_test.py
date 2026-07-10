@@ -6,8 +6,11 @@ from pathlib import Path
 import numpy as np
 import httpx
 
+from client.postprocessing.output_stabilizer import OutputStabilizer
+from shared.tcg_config import TCGConfig
+
 SERVICE_URL = "http://localhost:8000"
-CONFIG_PATH = os.path.join(Path(__file__).parent.parent, "shared/ygo_config.json")
+CONFIG_PATH = os.path.join(Path(__file__).parent.parent, "shared/yugioh.json")
 
 cap = cv2.VideoCapture("/home/kevin/Downloads/test3.mp4")
 cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
@@ -19,6 +22,8 @@ response = httpx.post(
     json=data
 )
 response.raise_for_status()
+
+stabilizer = OutputStabilizer(tcg_config=TCGConfig.load(CONFIG_PATH))
 
 while True:
     ret, img = cap.read()
@@ -50,21 +55,16 @@ while True:
 
         # Print and draw text if OCR returned result
         if text is not None:
-            print(f"Card: {text}")
-            cv2.putText(
-                img, str(text),
-                org=(10, 40),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=1.2,
-                color=(0, 255, 0),
-                thickness=2,
-                lineType=cv2.LINE_AA
-            )
+            stabilizer.forward(ocr_output=text)
     else:
         print(response.status_code)
 
     cv2.imshow("Inference  –  [N] Next  [Q] Quit", img)
     key = cv2.waitKey(0) & 0xFF
+    if key == ord('p'):
+        for name, stab in stabilizer.text_stabilizers.items():
+            print(f"{name}:")
+            print(json.dumps(stab.model_dump(), indent=4, ensure_ascii=False))
     if key == ord('q'):
         break
 

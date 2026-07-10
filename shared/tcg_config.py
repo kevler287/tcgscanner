@@ -11,6 +11,7 @@ class OCRField:
 @dataclass
 class TCGConfig:
     tcg: str
+    catalog: str
     card_w: int
     card_h: int
     ocr_fields: Dict[str, OCRField] 

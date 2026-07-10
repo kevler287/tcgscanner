@@ -10,7 +10,7 @@ import traceback
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.ready = False
-    default_config = TCGConfig.load("shared/ygo_config.json")
+    default_config = TCGConfig.load("shared/yugioh.json")
     app.state.segmentor = CardSegmentor(model_path="yolo/v1.pt", tcg_config=default_config)
     app.state.ocr = TextExtractor(use_gpu=True, tcg_config=default_config)
     app.state.ready = True
