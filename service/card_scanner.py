@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Response
 from contextlib import asynccontextmanager
 from shared.tcg_config import TCGConfig
-from yolo.card_segmentation import CardSegmentor
-from ocr.text_extraction import TextExtractor
+from ml.card_segmentation import CardSegmentor
+from ml.text_extraction import TextExtractor
+from handler import scan_handler
 import cv2
 import numpy as np
 import traceback
@@ -11,7 +12,7 @@ import traceback
 async def lifespan(app: FastAPI):
     app.state.ready = False
     default_config = TCGConfig.load("shared/yugioh.json")
-    app.state.segmentor = CardSegmentor(model_path="yolo/v1.pt", tcg_config=default_config)
+    app.state.segmentor = CardSegmentor(model_path="ml/v1.pt", tcg_config=default_config)
     app.state.ocr = TextExtractor(use_gpu=True, tcg_config=default_config)
     app.state.ready = True
     yield
@@ -50,17 +51,4 @@ async def scan(request: Request, file: UploadFile = File(...)):
     if img is None:
         raise HTTPException(status_code=400, detail="Invalid image file")
     
-    warped, sorted_pts = request.app.state.segmentor.segment_and_warp(img)
-    
-    if warped is None:
-        return {
-            "text": None,
-            "pts": sorted_pts.tolist() if sorted_pts is not None else None
-        }
-    
-    text = request.app.state.ocr.extract(card_image=warped)
-    
-    return {
-        "text": text,
-        "pts": sorted_pts.tolist() if sorted_pts is not None else None
-    }
+    return scan_handler.handle_frame(request=request, img=img)

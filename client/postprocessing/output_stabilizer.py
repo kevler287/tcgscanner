@@ -13,9 +13,14 @@ class OutputStabilizer:
                 stability_factor=cfg.stability_factor
             )
 
-    def new_epoch(self):
+    def _new_epoch(self):
         for stab in self.text_stabilizers.values():
             stab.new_epoch()
+
+    def _eval(self):
+        if all(stab.locked for stab in self.text_stabilizers.values()):
+            return {field: stab.get_dominant_element()[0] for field, stab in self.text_stabilizers.items()}
+        return None
 
     def forward(self, ocr_output: dict):
         for field, texts in ocr_output.items():
@@ -23,7 +28,8 @@ class OutputStabilizer:
                 continue
             for text in texts:
                 self.text_stabilizers[field].forward(text)
-        self.new_epoch()
+        self._new_epoch()
+        return self._eval()
 
 
 class TextStabilizer(BaseModel):
