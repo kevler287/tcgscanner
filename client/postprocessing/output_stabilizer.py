@@ -30,7 +30,10 @@ class OutputStabilizer:
                 self.text_stabilizers[field].forward(text)
         self._new_epoch()
         return self._eval()
-
+    
+    def clear(self):
+        for stab in self.text_stabilizers.values():
+            stab.reset()        
 
 class TextStabilizer(BaseModel):
     locked: bool = False

@@ -1,6 +1,6 @@
 import json
 from typing import Dict, List
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 @dataclass
 class OCRField:
@@ -21,6 +21,9 @@ class TCGConfig:
             k: v if isinstance(v, OCRField) else OCRField(**v)
             for k, v in self.ocr_fields.items()
         }
+
+    def to_json(self):
+        return json.dumps(asdict(self))
 
     @classmethod
     def load(cls, path: str) -> "TCGConfig":

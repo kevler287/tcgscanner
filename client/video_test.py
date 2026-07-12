@@ -4,10 +4,10 @@ import time
 
 import cv2
 from pathlib import Path
-import numpy as np
 import httpx
 
 from client.postprocessing.output_stabilizer import OutputStabilizer
+from client.postprocessing.csv_converter import CSVConverter
 from shared.tcg_config import TCGConfig
 
 SERVICE_URL = "http://localhost:8000"
@@ -16,6 +16,7 @@ CONFIG_PATH = os.path.join(Path(__file__).parent.parent, "shared/yugioh.json")
 cap = cv2.VideoCapture("http://127.0.0.1:8080/video")
 cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
 
+yugioh_config = TCGConfig.load(CONFIG_PATH)
 with open(CONFIG_PATH, "r") as f:
     data = json.load(f)
 response = httpx.post(
@@ -24,7 +25,11 @@ response = httpx.post(
 )
 response.raise_for_status()
 
-stabilizer = OutputStabilizer(tcg_config=TCGConfig.load(CONFIG_PATH))
+stabilizer = OutputStabilizer(tcg_config=yugioh_config)
+converter = CSVConverter(config=yugioh_config)
+
+collected = []
+ts = None
 
 counter = 0
 while True:
@@ -40,11 +45,9 @@ while True:
     if counter%10 != 0:
         continue
 
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    # if frame_width > frame_height:
-    #     img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
+    # when timer is set (=card was detected) wait 1 sec for new card before scanning
+    if ts is not None and (time.time() - ts) < 1:
+        continue
 
     # Encode frame and send to service
     start = time.time()
@@ -59,20 +62,20 @@ while True:
     if response.status_code == 200:
         data = response.json()
         text = data.get("text")
-        pts = data.get("pts")
 
-        # # Draw polylines if card was detected
-        # if pts is not None:
-        #     pts_array = np.array(pts, dtype=np.int32)
-        #     cv2.polylines(img, [pts_array], isClosed=True, color=(0, 255, 0), thickness=2)
-
-        # Print and draw text if OCR returned result
         if text is not None:
             result = stabilizer.forward(ocr_output=text)
+
+            # if stable result is present: store result, clear stabilizer and set timer
             if result:
                 print(result)
+                collected.append(result)
+                stabilizer.clear()
+                ts = time.time()
     else:
         print(response.status_code)
 
 cap.release()
 cv2.destroyAllWindows()
+
+converter.convert(card_jsons=collected)

@@ -1,0 +1,44 @@
+[
+    {
+        "c_js": {
+            "name": "X-SABEL URBELLUM",
+            "set_code": "SDS3-DE040",
+            "edition_0": "Auflage",
+            "edition_1": "-",
+            "exp_id": "SDS3",
+            "lang": "DE",
+            "cn": "040"
+        },
+        "catalog_entries": [
+            {
+                "cardmarketId": "249104",
+                "name": "X-Saber Urbellum",
+                "collectorNumber": "040",
+                "rarity": "Common",
+                "expansion": "Starter Deck: Duelist Toolbox",
+                "expansionCode": "5DS3"
+            }
+        ]
+    },
+    {
+        "c_js": {
+            "name": "FLOWER CARDIAN BOARDEFLY",
+            "set_code": "INOV-EN043",
+            "edition_0": "aoraavM",
+            "edition_1": "1 Edition",
+            "exp_id": "INOV",
+            "lang": "EN",
+            "cn": "043"
+        },
+        "catalog_entries": [
+            {
+                "cardmarketId": "293865",
+                "name": "Flower Cardian Boardefly",
+                "collectorNumber": "043",
+                "rarity": "Rare",
+                "expansion": "Invasion: Vengeance",
+                "expansionCode": "INOV"
+            }
+        ]
+    }
+]

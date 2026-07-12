@@ -1,6 +1,6 @@
 {
     "tcg": "yugioh",
-    "catalog":"https://downloads.s3.cardmarket.com/productCatalog/productList/products_singles_3.json",
+    "catalog":"shared/yugioh_catalog.csv",
     "card_w": 590,
     "card_h": 860,
     "ocr_fields": {

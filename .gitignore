@@ -1,7 +1,4 @@
-credentials/
-data_platform/etl/output/
-runs/
-yolo11n-seg.pt
+scripts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
