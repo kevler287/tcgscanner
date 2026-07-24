@@ -15,7 +15,7 @@ class TCGConfig:
     card_w: int
     card_h: int
     ocr_fields: Dict[str, OCRField] 
-    edition_locations: Dict[str, List[List[float]]]
+    edition_areas: Dict[str, List[List[float]]]
 
     def __post_init__(self):
         self.ocr_fields = {

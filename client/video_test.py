@@ -6,7 +6,7 @@ import cv2
 from pathlib import Path
 import httpx
 
-from client.postprocessing.output_stabilizer import OutputStabilizer
+from client.postprocessing.output_stabilizer import YugiohStabilizer
 from client.postprocessing.csv_converter import CSVConverter
 from shared.tcg_config import TCGConfig
 
@@ -25,7 +25,7 @@ response = httpx.post(
 )
 response.raise_for_status()
 
-stabilizer = OutputStabilizer(tcg_config=yugioh_config)
+stabilizer = YugiohStabilizer(tcg_config=yugioh_config)
 converter = CSVConverter(config=yugioh_config)
 
 collected = []
@@ -62,16 +62,21 @@ while True:
     if response.status_code == 200:
         data = response.json()
         text = data.get("text")
+        editions = data.get("editions", {})
 
         if text is not None:
-            result = stabilizer.forward(ocr_output=text)
+            card_scanned, snapshot = stabilizer.forward(ocr_output=text, edition_dets=editions)
 
             # if stable result is present: store result, clear stabilizer and set timer
-            if result:
-                print(result)
-                collected.append(result)
+            print("-----------------------------------------")
+            if card_scanned:
+                print(snapshot)
+                collected.append(snapshot)
                 stabilizer.clear()
                 ts = time.time()
+            else:
+                for field, progress in snapshot.items():
+                    print(f"{field}: {progress:.0%}")
     else:
         print(response.status_code)
 

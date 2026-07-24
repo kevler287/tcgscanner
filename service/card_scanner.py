@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Response
 from contextlib import asynccontextmanager
+from ml.edition_checker import EditionClassifier
 from shared.tcg_config import TCGConfig
 from ml.card_segmentation import CardSegmentor
 from ml.text_extraction import TextExtractor
@@ -14,6 +15,7 @@ async def lifespan(app: FastAPI):
     default_config = TCGConfig.load("shared/yugioh.json")
     app.state.segmentor = CardSegmentor(model_path="ml/v1.pt", tcg_config=default_config)
     app.state.ocr = TextExtractor(use_gpu=True, tcg_config=default_config)
+    app.state.ed_check = EditionClassifier(model_path="ml/models_ed_check_1.1.3.pt", tcg_config=default_config)
     app.state.ready = True
     yield
 

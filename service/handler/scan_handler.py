@@ -12,8 +12,10 @@ def handle_frame(request: Request, img: np.ndarray):
         }
     
     text = request.app.state.ocr.extract(card_image=warped)
+    edition_dets = request.app.state.ed_check.predict(frame=warped)
     
     return {
         "text": text,
-        "pts": sorted_pts.tolist() if sorted_pts is not None else None
+        "pts": sorted_pts.tolist() if sorted_pts is not None else None,
+        "editions": edition_dets
     }

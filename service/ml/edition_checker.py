@@ -16,7 +16,7 @@ from shared.tcg_config import TCGConfig
 
 
 class EditionClassifier:
-    def __init__(self, checkpoint_path, tcg_config: TCGConfig):
+    def __init__(self, model_path, tcg_config: TCGConfig):
         """
         Load a trained ResNet18 checkpoint (as saved by train()) and prepare it for inference.
 
@@ -27,7 +27,7 @@ class EditionClassifier:
         self.config = tcg_config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(model_path, map_location=self.device)
         self.classes = checkpoint["classes"]
         self.target_idx = self.classes.index("first_ed")
 
@@ -58,10 +58,10 @@ class EditionClassifier:
     @torch.no_grad()
     def predict(self,frame: np.ndarray) -> Dict[str, float]:
         h, w, _ = frame.shape
-        names = list(self.config.edition_locations.keys())
+        names = list(self.config.edition_areas.keys())
         tensors = []
         for name in names:
-            rel_pos = self.config.edition_locations[name]
+            rel_pos = self.config.edition_areas[name]
             y1 = int(h*rel_pos[0][1])
             y2 = int(h*rel_pos[1][1])
             x1 = int(w*rel_pos[0][0])
