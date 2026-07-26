@@ -5,6 +5,10 @@ services:
       dockerfile: service/Dockerfile
     ports:
       - "8000:8000"
+    environment:
+      DEBUG_DIR: /debug
+    volumes:
+      - ./debug:/debug
     deploy:
       resources:
         reservations:
