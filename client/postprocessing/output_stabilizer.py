@@ -1,3 +1,4 @@
+import numpy as np
 from pydantic import BaseModel, Field
 from typing import Dict, Tuple
 from shared.tcg_config import TCGConfig
@@ -69,6 +70,8 @@ class BinaryStabilizer(BaseModel):
         self.weight *= self.forget_rate
 
     def forward(self, true_prob: float):
+        if self.locked:
+            return
         signed_prob = (true_prob - 0.5) * 2
         self.weight += signed_prob
 
@@ -80,7 +83,7 @@ class BinaryStabilizer(BaseModel):
         self.locked = False
 
     def get_stabilized_class(self):
-        return self.weight / self.get_threshold()
+        return np.clip(self.weight / (self.get_threshold() * self.stability_factor), a_min=-1.0, a_max=1.0)
 
 class TextStabilizer(BaseModel):
     locked: bool = False
@@ -99,6 +102,8 @@ class TextStabilizer(BaseModel):
             self.weight_per_element[element] *= self.forget_rate
 
     def forward(self, new_value: Tuple[str, float]):
+        if self.locked:
+            return
         text, conf = new_value
         if conf == 0.0 or len(text) == 0:
             return
@@ -120,4 +125,5 @@ class TextStabilizer(BaseModel):
         if len(self.weight_per_element) == 0:
             return None, -1
         max_text = max(self.weight_per_element, key=self.weight_per_element.get)
-        return max_text, self.weight_per_element[max_text] / self.get_threshold()
+        reached = np.clip(self.weight_per_element[max_text] / (self.get_threshold() * self.stability_factor), a_min=0.0, a_max=1.0)
+        return max_text, reached
