@@ -1,24 +1,21 @@
 from fastapi import Request
 import numpy as np
 
-from service.utils import volume_writer
+from helper import volume_writer
 
 
 def handle_frame(request: Request, img: np.ndarray):
     warped, sorted_pts = request.app.state.segmentor.segment_and_warp(img)
+    if sorted_pts is None:
+        return {}
+    
     trace_id = volume_writer.new_trace_id()
-
     if request.app.state.debug:
         volume_writer.save_frame(trace_id, "00_raw", img)
-        volume_writer.save_json(trace_id, "01_sorted_pts", {
-            "pts": sorted_pts.tolist() if sorted_pts is not None else None
-        }) 
+        volume_writer.save_json(trace_id, "01_sorted_pts", {"pts": sorted_pts.tolist()}) 
  
     if warped is None:
-        return {
-            "text": None,
-            "pts": sorted_pts.tolist() if sorted_pts is not None else None
-        }
+        return {}
     
     text, ocr_crops = request.app.state.ocr.extract(card_image=warped)
     edition_dets, ed_crops = request.app.state.ed_check.predict(frame=warped)
@@ -32,6 +29,5 @@ def handle_frame(request: Request, img: np.ndarray):
     
     return {
         "text": text,
-        "pts": sorted_pts.tolist() if sorted_pts is not None else None,
         "editions": edition_dets
     }

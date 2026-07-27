@@ -1,17 +1,18 @@
 import json
 import os
+import sys
 import time
 
 import cv2
 from pathlib import Path
 import httpx
 
-from client.postprocessing.output_stabilizer import YugiohStabilizer
-from client.postprocessing.csv_converter import CSVConverter
+from client.inference.output_stabilizer import YugiohStabilizer
+from client.inference.csv_converter import CSVConverter
 from shared.tcg_config import TCGConfig
 
 SERVICE_URL = "http://localhost:8000"
-CONFIG_PATH = os.path.join(Path(__file__).parent.parent, "shared/yugioh.json")
+CONFIG_PATH = os.path.join(Path(__file__).parent.parent.parent, "shared/yugioh.json")
 
 cap = cv2.VideoCapture("http://127.0.0.1:8080/video")
 cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
@@ -23,6 +24,9 @@ response = httpx.post(
     f"{SERVICE_URL}/configure",
     json=data
 )
+response.raise_for_status()
+
+response = httpx.get(f"{SERVICE_URL}/toggle-debug")
 response.raise_for_status()
 
 stabilizer = YugiohStabilizer(tcg_config=yugioh_config)
