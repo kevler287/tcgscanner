@@ -56,10 +56,11 @@ class EditionClassifier:
         return self.transform(img)
 
     @torch.no_grad()
-    def predict(self,frame: np.ndarray) -> Dict[str, float]:
+    def predict(self, frame: np.ndarray) -> Dict[str, float]:
         h, w, _ = frame.shape
         names = list(self.config.edition_areas.keys())
         tensors = []
+        crops = []
         for name in names:
             rel_pos = self.config.edition_areas[name]
             y1 = int(h*rel_pos[0][1])
@@ -69,9 +70,10 @@ class EditionClassifier:
             crop = frame[y1:y2, x1:x2]
             img = Image.fromarray(crop.astype(np.uint8)).convert("RGB")
             tensors.append(self.transform(img))
+            crops.append(crop)
 
         probs = F.softmax(
             self.model(torch.stack(tensors).to(self.device)), dim=1
         ).cpu()
 
-        return {name: float(probs[i, self.target_idx]) for i, name in enumerate(names)}
+        return {name: float(probs[i, self.target_idx]) for i, name in enumerate(names)}, crops

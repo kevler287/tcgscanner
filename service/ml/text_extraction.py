@@ -8,7 +8,7 @@ class TextExtractor:
         self.ocr = PaddleOCR(use_angle_cls=True, use_gpu=use_gpu, lang="en")
         self.yugioh_config = tcg_config
 
-    def extract(self, card_image: np.ndarray) -> str | None:
+    def extract(self, card_image: np.ndarray):
         h, w, _ = card_image.shape
         names = []
         crops = []
@@ -26,4 +26,4 @@ class TextExtractor:
         for name, result in zip(names, raw):
             extracted[name] = result
 
-        return extracted
+        return extracted, crops
