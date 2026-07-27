@@ -24,13 +24,13 @@ sudo systemctl restart docker
 
 ```bash
 docker compose up -d
-python client/video_test.py
+python -m client.inference.main
 ```
 
 The first build takes a few minutes — PaddleOCR models are downloaded and baked into the image. Subsequent starts are fast.
 
 ```bash
-docker compose logs -f   # wait for "OCR Service ready."
+docker compose logs -f
 docker compose down
 ```
 
