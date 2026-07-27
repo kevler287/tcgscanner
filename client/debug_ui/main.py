@@ -7,13 +7,12 @@ DEBUG_DIR = Path("./debug")
 
 st.set_page_config(layout="wide")
 
-
 def list_trace_ids():
     return sorted(p.name for p in DEBUG_DIR.iterdir() if p.is_dir())
 
 
 def load_image(trace_dir, name):
-    path = trace_dir / f"{name}.png"
+    path = trace_dir / f"{name}.jpg"
     return Image.open(path) if path.exists() else None
 
 
@@ -29,6 +28,13 @@ def draw_pts_overlay(raw_img, pts):
         poly = [tuple(p) for p in pts]
         draw.polygon(poly, outline="red", width=4)
     return img
+
+def resize_to_height(img, target_height=250):
+    if img is None:
+        return None
+    ratio = target_height / img.height
+    new_width = int(img.width * ratio)
+    return img.resize((new_width, target_height))
 
 
 trace_ids = list_trace_ids()
@@ -55,24 +61,24 @@ warped = load_image(trace_dir, "02_warped")
 ocr_result = load_json(trace_dir, "03_ocr_result")
 edition_result = load_json(trace_dir, "04_edition_result")
 
-# --- 3 Hauptspalten: raw+mask | warped | results ---
 raw_col, warped_col, results_col = st.columns([1, 1, 1.5])
 
 with raw_col:
     st.caption("Raw + sorted_pts")
     if raw:
-        st.image(draw_pts_overlay(raw, pts_data["pts"] if pts_data else None))
+        img = draw_pts_overlay(raw, pts_data["pts"] if pts_data else None)
+        st.image(resize_to_height(img, 650))
 
 with warped_col:
     st.caption("Warped")
     if warped:
-        st.image(warped)
+        st.image(resize_to_height(warped, 650))
     else:
         st.info("Kein warped image")
 
 with results_col:
-    st.markdown("**OCR**")
-    for i in range(2):
+    st.caption("OCR")
+    for i, field in enumerate(["name", "set_code"]):
         img_col, res_col = st.columns(2)
         with img_col:
             crop = load_image(trace_dir, f"03_ocr_crop_{i:02d}")
@@ -80,9 +86,9 @@ with results_col:
                 st.image(crop)
         with res_col:
             if ocr_result:
-                st.json(ocr_result)
+                st.text(ocr_result["text"][field])
 
-    st.markdown("**Edition**")
+    st.caption("First Edition Probability")
     for i in range(2):
         img_col, res_col = st.columns(2)
         with img_col:
@@ -91,9 +97,7 @@ with results_col:
                 st.image(crop)
         with res_col:
             if edition_result:
-                st.json(edition_result)
+                prob = edition_result["editions"][f"first_ed_{i}"]
+                st.text(f"{prob:.0%}")
 
 st.divider()
-
-# --- Zweite Row: leer für später ---
-st.container(height=200, border=True)

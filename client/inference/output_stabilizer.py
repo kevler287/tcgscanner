@@ -114,7 +114,7 @@ class TextStabilizer(BaseModel):
 
         dominant_text, weight = self.get_dominant_element()
         if dominant_text is not None:
-            if weight >= self.get_threshold():
+            if weight >= 1.0:
                 self.locked = True
 
     def reset(self):

@@ -41,6 +41,8 @@ while True:
     if not ret:
         break
 
+    img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+
     cv2.imshow("Inference  –  [N] Next  [Q] Quit", img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

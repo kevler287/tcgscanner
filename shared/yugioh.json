@@ -15,8 +15,8 @@
                     0.11
                 ]
             ],
-            "forget_rate": 0.7,
-            "stability_factor": 0.3
+            "forget_rate": 0.8,
+            "stability_factor": 0.4
         },
         "set_code": {
             "position": [
@@ -29,8 +29,8 @@
                     0.76
                 ]
             ],
-            "forget_rate": 0.7,
-            "stability_factor": 0.7
+            "forget_rate": 0.8,
+            "stability_factor": 0.6
         }
     },
     "edition_areas": {

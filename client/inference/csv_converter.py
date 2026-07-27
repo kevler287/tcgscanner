@@ -103,7 +103,7 @@ class CSVConverter:
         for c_js in card_jsons:
             decom = self._decompose_set_code(c_js["set_code"])
             if decom is None:
-                self.output[c_js] = None
+                self.output.append(MatchedCard(c_js=c_js, catalog_entries=[]))
                 continue
 
             exp_id, lang, cn = decom
