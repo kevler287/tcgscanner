@@ -7,7 +7,7 @@ import cv2
 from pathlib import Path
 import httpx
 
-from client.inference.output_stabilizer import YugiohStabilizer
+from client.inference.yugioh.stabilizer import YugiohStabilizer
 from client.inference.csv_converter import CSVConverter
 from shared.tcg_config import TCGConfig
 
@@ -71,18 +71,17 @@ while True:
         editions = data.get("editions", {})
 
         if text is not None:
-            card_scanned, snapshot = stabilizer.forward(ocr_output=text, edition_dets=editions)
+            card_scanned, progress = stabilizer.forward(ocr_output=text, edition_dets=editions)
+            print("-----------------------------------------")
+            for field, progress in progress.items():
+                print(f"{field}: {progress:.0%}")
 
             # if stable result is present: store result, clear stabilizer and set timer
-            print("-----------------------------------------")
             if card_scanned:
-                print(snapshot)
-                collected.append(snapshot)
+                print("########## CARD REGISTERED ##########")
+                collected.append(progress)
                 stabilizer.clear()
                 ts = time.time()
-            else:
-                for field, progress in snapshot.items():
-                    print(f"{field}: {progress:.0%}")
     else:
         print(response.status_code)
 

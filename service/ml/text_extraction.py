@@ -12,11 +12,11 @@ class TextExtractor:
         h, w, _ = card_image.shape
         names = []
         crops = []
-        for name, field_cfg in self.yugioh_config.ocr_fields.items():
-            y1 = int(h*field_cfg.position[0][1])
-            y2 = int(h*field_cfg.position[1][1])
-            x1 = int(w*field_cfg.position[0][0])
-            x2 = int(w*field_cfg.position[1][0])
+        for name, pos in self.yugioh_config.ocr_fields.items():
+            y1 = int(h*pos[0][1])
+            y2 = int(h*pos[1][1])
+            x1 = int(w*pos[0][0])
+            x2 = int(w*pos[1][0])
             crop = card_image[y1:y2, x1:x2]
             names.append(name)
             crops.append(crop)

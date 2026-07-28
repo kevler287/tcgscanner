@@ -3,25 +3,13 @@ from typing import Dict, List
 from dataclasses import asdict, dataclass
 
 @dataclass
-class OCRField:
-    position: List[List[float]] #[[x1,y1],[x2,y2]]
-    forget_rate: float
-    stability_factor: float
-
-@dataclass
 class TCGConfig:
     tcg: str
     catalog: str
     card_w: int
     card_h: int
-    ocr_fields: Dict[str, OCRField] 
+    ocr_fields: Dict[str, List[List[float]]] 
     edition_areas: Dict[str, List[List[float]]]
-
-    def __post_init__(self):
-        self.ocr_fields = {
-            k: v if isinstance(v, OCRField) else OCRField(**v)
-            for k, v in self.ocr_fields.items()
-        }
 
     def to_json(self):
         return json.dumps(asdict(self))
