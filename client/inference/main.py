@@ -8,7 +8,7 @@ from pathlib import Path
 import httpx
 
 from client.inference.yugioh.stabilizer import YugiohStabilizer
-from client.inference.csv_converter import CSVConverter
+from client.inference.common.csv_converter import CSVConverter
 from shared.tcg_config import TCGConfig
 
 SERVICE_URL = "http://localhost:8000"
