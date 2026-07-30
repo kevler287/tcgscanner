@@ -6,14 +6,14 @@ from shared.tcg_config import TCGConfig
 
 class YugiohStabilizer:
 
-    def __init__(self, tcg_config: TCGConfig):
-        self.yugioh_config = tcg_config
+    def __init__(self):
+        self.config = TCGConfig.load("shared/yugioh.json")
 
         self.setcode_stabilizer = TextStabilizer(stability_factor=0.6)
         self.name_stabilizer = TextStabilizer(stability_factor=0.4)
 
         self.edition_stabilizers: Dict[str, BinaryStabilizer] = {}
-        for loc_name in self.yugioh_config.edition_areas.keys():
+        for loc_name in self.config.edition_areas.keys():
             self.edition_stabilizers[loc_name] = BinaryStabilizer(
                 forget_rate=0.7,
                 stability_factor=0.8

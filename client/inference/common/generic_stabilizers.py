@@ -33,7 +33,10 @@ class BinaryStabilizer(BaseModel):
         self.locked = False
 
     def get_progress(self):
-        return np.clip(self.weight / (self.get_threshold() * self.stability_factor), a_min=-1.0, a_max=1.0)
+        progress = np.clip(self.weight / (self.get_threshold() * self.stability_factor), a_min=-1.0, a_max=1.0)
+        if abs(progress) < 0.9:
+            return None, progress
+        return self.weight > 0, progress
 
 class TextStabilizer(BaseModel):
     locked: bool = False

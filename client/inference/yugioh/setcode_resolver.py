@@ -16,7 +16,7 @@ DOUBLE_CHAR_LANG_CODES = {
 def resolve_setcode(setcode: str):
     parts = setcode.split("-")
     if len(parts) != 2:
-        return None
+        return None, None, None
 
     expansion_code = parts[0]
     language_code = parts[:-3]

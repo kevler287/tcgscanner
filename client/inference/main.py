@@ -1,36 +1,29 @@
-import json
-import os
-import sys
 import time
 
 import cv2
-from pathlib import Path
 import httpx
 
 from client.inference.yugioh.stabilizer import YugiohStabilizer
-from client.inference.common.csv_converter import CSVConverter
+from client.inference.yugioh.csv_builder import YugiohCSVBuilder
 from shared.tcg_config import TCGConfig
 
 SERVICE_URL = "http://localhost:8000"
-CONFIG_PATH = os.path.join(Path(__file__).parent.parent.parent, "shared/yugioh.json")
 
 cap = cv2.VideoCapture("http://127.0.0.1:8080/video")
 cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
 
-yugioh_config = TCGConfig.load(CONFIG_PATH)
-with open(CONFIG_PATH, "r") as f:
-    data = json.load(f)
+yugioh_config = TCGConfig.load("shared/yugioh.json")
 response = httpx.post(
     f"{SERVICE_URL}/configure",
-    json=data
+    json=yugioh_config.to_json()
 )
 response.raise_for_status()
 
 response = httpx.get(f"{SERVICE_URL}/toggle-debug")
 response.raise_for_status()
 
-stabilizer = YugiohStabilizer(tcg_config=yugioh_config)
-converter = CSVConverter(config=yugioh_config)
+stabilizer = YugiohStabilizer()
+csv_builder = YugiohCSVBuilder()
 
 collected = []
 ts = None
@@ -88,4 +81,4 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
-converter.convert(card_jsons=collected)
+csv_builder.detections_to_csv(ygo_dets=collected)
