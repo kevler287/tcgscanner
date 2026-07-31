@@ -9,8 +9,8 @@ class YugiohStabilizer:
     def __init__(self):
         self.config = TCGConfig.load("shared/yugioh.json")
 
-        self.setcode_stabilizer = TextStabilizer(stability_factor=0.6)
-        self.name_stabilizer = TextStabilizer(stability_factor=0.4)
+        self.setcode_stabilizer = TextStabilizer(stability_factor=0.7)
+        self.name_stabilizer = TextStabilizer(stability_factor=0.5)
 
         self.edition_stabilizers: Dict[str, BinaryStabilizer] = {}
         for loc_name in self.config.edition_areas.keys():
@@ -45,7 +45,7 @@ class YugiohStabilizer:
             self.name_stabilizer.forward(name_det)
 
         for loc_name, first_ed_prob in edition_dets.items():
-            if loc_name not in self.text_stabilizers.keys(): continue
+            if loc_name not in self.edition_stabilizers.keys(): continue
             self.edition_stabilizers[loc_name].forward(true_prob=first_ed_prob)
         
         self._new_epoch()
@@ -53,7 +53,7 @@ class YugiohStabilizer:
         return self._eval()
     
     def clear(self):
-        for stab in self.text_stabilizers.values():
-            stab.reset() 
+        self.name_stabilizer.reset()
+        self.setcode_stabilizer.reset()
         for stab in self.edition_stabilizers.values():
             stab.reset()

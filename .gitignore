@@ -1,6 +1,7 @@
 scripts/
 temp/
 debug/
+output/
 **/*venv/
 
 # Byte-compiled / optimized / DLL files

@@ -17,14 +17,11 @@ class ProductCatalogService:
         remaining_entries = self.catalog[self.catalog["expansionCode"].isin(ec_opts)]
 
         if len(remaining_entries) == 0:
-            return []
+            return remaining_entries
 
         remaining_entries = remaining_entries[remaining_entries["collectorNumber"].isin(cn_opts)]
 
-        if len(remaining_entries) == 0:
-            return []
-
-        if len(remaining_entries) == 1:
+        if len(remaining_entries) <= 1:
             return remaining_entries
 
         filtered = remaining_entries[

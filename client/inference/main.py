@@ -1,4 +1,5 @@
 import argparse
+import json
 import time
 
 import cv2
@@ -7,12 +8,11 @@ import numpy as np
 
 from client.inference.yugioh.stabilizer import YugiohStabilizer
 from client.inference.yugioh.csv_builder import YugiohCSVBuilder
-from shared.tcg_config import TCGConfig
 
 SERVICE_URL = "http://localhost:8000"
-PANEL_WIDTH = 300
-BAR_HEIGHT = 30
-BAR_PADDING = 15
+PANEL_WIDTH = 900
+BAR_HEIGHT = 60
+BAR_PADDING = 30
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 
 stabilizer = YugiohStabilizer()
@@ -34,7 +34,7 @@ def build_progress_panel(progress: dict, card_scanned: bool, panel_height: int) 
         text = "SUCCESS"
         text_size = cv2.getTextSize(text, FONT, 0.8, 2)[0]
         text_x = (PANEL_WIDTH - text_size[0]) // 2
-        cv2.putText(panel, text, (text_x, center_y + 20), FONT, 0.8, (0, 200, 0), 2, cv2.LINE_AA)
+        cv2.putText(panel, text, (text_x, center_y + 20), FONT, 0.8, (0, 200, 0), 3, cv2.LINE_AA)
 
         return panel
     else:
@@ -43,13 +43,13 @@ def build_progress_panel(progress: dict, card_scanned: bool, panel_height: int) 
         y = BAR_PADDING
         for field, (value, fraction) in progress.items():
             label = f"{field}: {value}"
-            cv2.putText(panel, label, (10, y + 15), FONT, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(panel, label, (10, y + 15), FONT, 1.5, (255, 255, 255), 2, cv2.LINE_AA)
 
             bar_y = y + 25
             cv2.rectangle(panel, (10, bar_y), (PANEL_WIDTH - 10, bar_y + 10), (80, 80, 80), -1)
 
-            fill_width = int((PANEL_WIDTH - 20) * min(max(fraction, 0), 1))
-            color = (0, 200, 0) if fraction >= 1.0 else (0, 165, 255)
+            fill_width = int((PANEL_WIDTH - 20) * min(max(abs(fraction), 0), 1))
+            color = (0, 200, 0) if abs(fraction) >= 1.0 else (0, 165, 255)
             cv2.rectangle(panel, (10, bar_y), (10 + fill_width, bar_y + 10), color, -1)
 
             y += BAR_HEIGHT + BAR_PADDING
@@ -66,9 +66,12 @@ def build_live_ui(frame: np.ndarray, panel: np.ndarray) -> np.ndarray:
     return np.hstack([frame, panel])
 
 def process_frame(frame: np.ndarray, debug: bool):
-    # when timer is set (=card was detected) wait 1 sec for new card before scanning
-    if ts is not None and (time.time() - ts) < 1:
-        return None
+    global ts
+    global collected
+
+    # when timer is set (=card was detected) wait 2 sec for new card before scanning
+    if ts is not None and (time.time() - ts) < 2:
+        return build_progress_panel({}, True, panel_height=frame.shape[0])
 
     # Encode frame and send to service
     start = time.time()
@@ -92,7 +95,7 @@ def process_frame(frame: np.ndarray, debug: bool):
             stabilizer.clear()
             ts = time.time()
 
-        progress_panel = build_progress_panel(progress, card_scanned, panel_height=img.shape[0])
+        progress_panel = build_progress_panel(progress, card_scanned, panel_height=frame.shape[0])
         return progress_panel
     else:
         print(response.status_code)
@@ -131,10 +134,11 @@ def run_capture_loop(debug: bool = False, frame_skip: int = 10) -> list:
 def main():
     args = parse_args()
 
-    yugioh_config = TCGConfig.load("shared/yugioh.json")
+    with open("shared/yugioh.json", "r") as f:
+        data = json.load(f)
     response = httpx.post(
         f"{SERVICE_URL}/configure",
-        json=yugioh_config.to_json()
+        json=data
     )
     response.raise_for_status()
 

@@ -2,14 +2,14 @@ from client.inference.common.text_normalizer import *
 
 SINGLE_CHAR_LANG_CODES = {
     "E": "English",
-    "G": "German"
+    "G": "German",
 }
 
 DOUBLE_CHAR_LANG_CODES = {
     "EN": "English",
     "DE": "German",
     "JP": "Japanese",
-    "KR": "Korean"
+    "KR": "Korean",
 }
 
 # works for most of the set codes. Still there are few exceptions which will not be parsable with this module
@@ -19,11 +19,11 @@ def resolve_setcode(setcode: str):
         return None, None, None
 
     expansion_code = parts[0]
-    language_code = parts[:-3]
+    language_code = parts[1][:-3]
     collector_number = parts[1][-3:]
 
     ec_opts = resolve_expansion_code(expansion_code)
-    language = resolve_language_code(language_code),
+    language = resolve_language_code(language_code)
     cn_opts = resolve_collector_number(collector_number)
 
     return ec_opts, language, cn_opts

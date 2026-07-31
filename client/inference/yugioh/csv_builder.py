@@ -21,10 +21,10 @@ class OutputCSVRow:
     language: str
     isFirstEd: Optional[str] = None     # "true" or empty
 
-    isSigned = None                     # very exceptional
+    isSigned = ""                     # very exceptional
     price: float = 1000.0               # fix default will be overwritten by auto pricing bot of TCG PowerTools
     comment: str = "Daily shipping"
-    buyPrice = None                     # not maintained
+    buyPrice = ""                     # not maintained
 
 @dataclass
 class AmbiguousDetection:
@@ -45,7 +45,7 @@ class AmbiguousDetection:
 
 class YugiohCSVBuilder:
 
-    def __init__(self, dest_path = "/output/yugioh"):
+    def __init__(self, dest_path = "output/yugioh/"):
         self.dest_path = Path(dest_path)
         self.config = TCGConfig.load("shared/yugioh.json")
         self.catalog_srv = ProductCatalogService(config=self.config)
@@ -81,20 +81,20 @@ class YugiohCSVBuilder:
                 name=products['name'].iloc[0],
                 set=products['expansion'].iloc[0],
                 cn=products['collectorNumber'].iloc[0],
-                condition=None,
+                condition="NM", #TODO set static via arg
                 language=language,
                 isFirstEd=first_ed_0 or first_ed_1
             ))
 
         self._build(ygo_dets=ygo_dets)
 
-    def _new_trace_id() -> str:
+    def _new_trace_id(self) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
         return str(timestamp)
 
     def _build(self, ygo_dets: List[dict]):
         out_path = self.dest_path / self._new_trace_id()
-        self.out_path.mkdir(parents=True, exist_ok=True)
+        out_path.mkdir(parents=True, exist_ok=True)
 
         df = pd.DataFrame([asdict(row) for row in self.csv_data])
         df.to_csv(str(out_path / "bulklist.csv"), index=False)

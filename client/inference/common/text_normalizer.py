@@ -19,7 +19,7 @@ for a, b in AMBIGUOUS_CHARS.items():
 def letter_to_number(text: str) -> str:
     '''Unifies different OCR detections to a common spelling for faster convergence e.g. DE053 & DEOS3'''
     for l, n in AMBIGUOUS_CHARS.items():
-        text.replace(l, n)
+        text = text.replace(l, n)
     return text
 
 def generate_ambiguous_permutations(text: str) -> list[str]:
