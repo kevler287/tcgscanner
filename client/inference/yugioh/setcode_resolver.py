@@ -35,9 +35,9 @@ def resolve_language_code(language_code: str):
     if len(language_code) == 0:
         return "English"
     if len(language_code) == 1:
-        return SINGLE_CHAR_LANG_CODES[language_code]
+        return SINGLE_CHAR_LANG_CODES.get(language_code)
     if len(language_code) == 2:
-        return DOUBLE_CHAR_LANG_CODES[language_code]
+        return DOUBLE_CHAR_LANG_CODES.get(language_code)
     return None
 
 def resolve_collector_number(collector_number: str):
