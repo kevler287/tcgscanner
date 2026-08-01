@@ -6,8 +6,12 @@ import cv2
 import httpx
 import numpy as np
 
+from client.inference.common.catalog_srv import ProductCatalogService
+from client.inference.common.detectionstate_enum import DetectionState
+from client.inference.yugioh.setcode_resolver import resolve_setcode
 from client.inference.yugioh.stabilizer import YugiohStabilizer
 from client.inference.yugioh.csv_builder import YugiohCSVBuilder
+from shared.tcg_config import TCGConfig
 
 SERVICE_URL = "http://localhost:8000"
 PANEL_WIDTH = 900
@@ -16,7 +20,9 @@ BAR_PADDING = 30
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 
 stabilizer = YugiohStabilizer()
-collected = []
+csv_builder = YugiohCSVBuilder()
+config = TCGConfig.load("shared/yugioh.json")
+catalog_srv = ProductCatalogService(config=config)
 ts = None
 
 def parse_args():
@@ -25,16 +31,16 @@ def parse_args():
     parser.add_argument("--frame-skip", type=int, default=10, help="process every Nth frame")
     return parser.parse_args()
 
-def build_progress_panel(progress: dict, card_scanned: bool, panel_height: int) -> np.ndarray:
-    if card_scanned:
+def build_progress_panel(progress: dict, status: DetectionState, panel_height: int) -> np.ndarray:
+    if status is not None:
         panel = np.full((panel_height, PANEL_WIDTH, 3), 30, dtype=np.uint8)
 
         center_y = panel_height // 2
 
-        text = "SUCCESS"
+        text = status.name
         text_size = cv2.getTextSize(text, FONT, 0.8, 2)[0]
         text_x = (PANEL_WIDTH - text_size[0]) // 2
-        cv2.putText(panel, text, (text_x, center_y + 20), FONT, 0.8, (0, 200, 0), 3, cv2.LINE_AA)
+        cv2.putText(panel, text, (text_x, center_y + 20), FONT, 0.8, status.get_color(), 3, cv2.LINE_AA)
 
         return panel
     else:
@@ -67,7 +73,6 @@ def build_live_ui(frame: np.ndarray, panel: np.ndarray) -> np.ndarray:
 
 def process_frame(frame: np.ndarray, debug: bool):
     global ts
-    global collected
 
     # when timer is set (=card was detected) wait 2 sec for new card before scanning
     if ts is not None and (time.time() - ts) < 2:
@@ -90,22 +95,47 @@ def process_frame(frame: np.ndarray, debug: bool):
         editions = data.get("editions", {})
 
         card_scanned, progress = stabilizer.forward(ocr_output=text, edition_dets=editions)
+        status = None
         if card_scanned:
-            collected.append(progress)
+            status, products = find_product_from_detection(det_json=progress)
+            csv_builder.append(det_json=progress, products=products)
             stabilizer.clear()
             ts = time.time()
 
-        progress_panel = build_progress_panel(progress, card_scanned, panel_height=frame.shape[0])
+        progress_panel = build_progress_panel(progress, status, panel_height=frame.shape[0])
         return progress_panel
     else:
         print(response.status_code)
         return None
 
+def find_product_from_detection(det_json: dict):  
+    set_code = det_json["set_code"][0]
+    name = det_json["name"][0]
+    first_ed_0 = det_json["first_ed_0"][0]
+    first_ed_1 = det_json["first_ed_1"][0]
+
+    if first_ed_0 and first_ed_1:
+        det_json["error"] = "1st Edition label was detected in both locations"
+        return DetectionState.ERRONEOUS, None
+    
+    ec_opts, language, cn_opts = resolve_setcode(setcode=set_code)
+    det_json.update({"ec_opts": ec_opts, "language": language, "cn_opts": cn_opts})
+
+    if any(x is None for x in [ec_opts, language, cn_opts]):
+        det_json["error"] = "Card could not be identified due to set code resolve error"
+        return DetectionState.ERRONEOUS, None
+
+    products = catalog_srv.find_yugioh_card(card_name=name, ec_opts=ec_opts, cn_opts=cn_opts)
+    if len(products) != 1:
+        return DetectionState.AMBIGUOUS, products
+
+    return DetectionState.IDENTIFIED, products
+
 def run_capture_loop(debug: bool = False, frame_skip: int = 10) -> list:
     cap = cv2.VideoCapture("http://127.0.0.1:8080/video")
     cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
 
-    progress_panel = build_progress_panel({}, card_scanned=False, panel_height=480)  # placeholder, adjust height
+    progress_panel = build_progress_panel({}, status=False, panel_height=480)  # placeholder, adjust height
 
     counter = 0
     try:
@@ -146,11 +176,9 @@ def main():
         response = httpx.get(f"{SERVICE_URL}/toggle-debug")
         response.raise_for_status()
 
-    csv_builder = YugiohCSVBuilder()
-
     run_capture_loop(debug=args.debug, frame_skip=args.frame_skip)
 
-    csv_builder.detections_to_csv(ygo_dets=collected)
+    csv_builder.build()
 
 
 if __name__ == "__main__":
