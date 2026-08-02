@@ -1,9 +1,11 @@
 import argparse
 import json
+import subprocess
 import time
 
 import cv2
 import httpx
+import imageio
 import numpy as np
 
 from client.inference.common.catalog_srv import ProductCatalogService
@@ -28,22 +30,24 @@ ts = None
 def parse_args():
     parser = argparse.ArgumentParser(description="Yugioh card scanner CLI")
     parser.add_argument("--debug", action="store_true", help="enable debug mode")
+    parser.add_argument("--record", action="store_true", help="enable stream recording")
     parser.add_argument("--frame-skip", type=int, default=10, help="process every Nth frame")
+    parser.add_argument("--condition", required=True, type=str, help="default condition set for all scanned cards")
     return parser.parse_args()
 
 def build_progress_panel(progress: dict, status: DetectionState, panel_height: int) -> np.ndarray:
-    if status is not None:
+    if status in [DetectionState.IDENTIFIED, DetectionState.AMBIGUOUS, DetectionState.ERRONEOUS]:
         panel = np.full((panel_height, PANEL_WIDTH, 3), 30, dtype=np.uint8)
 
         center_y = panel_height // 2
 
         text = status.name
-        text_size = cv2.getTextSize(text, FONT, 0.8, 2)[0]
+        text_size = cv2.getTextSize(text, FONT, 2, 3)[0]
         text_x = (PANEL_WIDTH - text_size[0]) // 2
-        cv2.putText(panel, text, (text_x, center_y + 20), FONT, 0.8, status.get_color(), 3, cv2.LINE_AA)
+        cv2.putText(panel, text, (text_x, center_y + 20), FONT, 2, status.get_color_gbr(), 3, cv2.LINE_AA)
 
         return panel
-    else:
+    elif status == DetectionState.RUNNING:
         panel = np.full((panel_height, PANEL_WIDTH, 3), 30, dtype=np.uint8)
 
         y = BAR_PADDING
@@ -61,6 +65,7 @@ def build_progress_panel(progress: dict, status: DetectionState, panel_height: i
             y += BAR_HEIGHT + BAR_PADDING
 
         return panel
+    return None
 
 def build_live_ui(frame: np.ndarray, panel: np.ndarray) -> np.ndarray:
     # match panel height to frame height
@@ -71,12 +76,12 @@ def build_live_ui(frame: np.ndarray, panel: np.ndarray) -> np.ndarray:
 
     return np.hstack([frame, panel])
 
-def process_frame(frame: np.ndarray, debug: bool):
+def process_frame(condition: str, frame: np.ndarray, debug: bool):
     global ts
 
     # when timer is set (=card was detected) wait 2 sec for new card before scanning
     if ts is not None and (time.time() - ts) < 2:
-        return build_progress_panel({}, True, panel_height=frame.shape[0])
+        return build_progress_panel({}, None, panel_height=frame.shape[0])
 
     # Encode frame and send to service
     start = time.time()
@@ -95,10 +100,11 @@ def process_frame(frame: np.ndarray, debug: bool):
         editions = data.get("editions", {})
 
         card_scanned, progress = stabilizer.forward(ocr_output=text, edition_dets=editions)
-        status = None
+        status = DetectionState.RUNNING
         if card_scanned:
             status, products = find_product_from_detection(det_json=progress)
-            csv_builder.append(det_json=progress, products=products)
+            progress["condition"] = condition
+            csv_builder.append(det_progress=progress, products=products)
             stabilizer.clear()
             ts = time.time()
 
@@ -131,12 +137,14 @@ def find_product_from_detection(det_json: dict):
 
     return DetectionState.IDENTIFIED, products
 
-def run_capture_loop(debug: bool = False, frame_skip: int = 10) -> list:
+def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) -> list:
     cap = cv2.VideoCapture("http://127.0.0.1:8080/video")
     cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
+    writer = None
 
-    progress_panel = build_progress_panel({}, status=False, panel_height=480)  # placeholder, adjust height
+    progress_panel = build_progress_panel({}, status=None, panel_height=480)  # placeholder, adjust height
 
+    frames = []
     counter = 0
     try:
         while True:
@@ -147,9 +155,11 @@ def run_capture_loop(debug: bool = False, frame_skip: int = 10) -> list:
             img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 
             if counter % frame_skip == 0:
-                progress_panel = process_frame(frame=img, debug=debug)
+                next_panel = process_frame(frame=img, debug=debug, condition=condition)
+                if next_panel is not None: progress_panel = next_panel
 
             display = build_live_ui(img, progress_panel)
+            frames.append(display)
             cv2.imshow("Inference  –  [N] Next  [Q] Quit", display)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -159,6 +169,8 @@ def run_capture_loop(debug: bool = False, frame_skip: int = 10) -> list:
     finally:
         cap.release()
         cv2.destroyAllWindows()
+
+    return frames
 
 
 def main():
@@ -176,9 +188,16 @@ def main():
         response = httpx.get(f"{SERVICE_URL}/toggle-debug")
         response.raise_for_status()
 
-    run_capture_loop(debug=args.debug, frame_skip=args.frame_skip)
+    frames = run_capture_loop(debug=args.debug, frame_skip=args.frame_skip, condition=args.condition)
 
     csv_builder.build()
+
+    if args.record:
+        writer = imageio.get_writer("output/recording.mp4", fps=30)
+        for f in frames:
+            # OpenCV returns BGR, imageio expects RGB
+            writer.append_data(f[:, :, ::-1])
+        writer.close()
 
 
 if __name__ == "__main__":

@@ -4,4 +4,6 @@ numpy==1.26.4
 httpx
 pydantic
 pillow
-streamlit
+streamlit #only for debugging
+imageio #only for --record flag
+imageio--ffmpeg #only for --record flag

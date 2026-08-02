@@ -31,11 +31,11 @@ class YugiohCSVBuilder:
         self.ambiguous: List[dict] = []
         self.erroneous: List[dict] = []
 
-    def append(self, det_json: dict, products: pd.DataFrame):
-        if products is None:
-            self.erroneous.append(det_json)
-        if len(products) != 1:
-            self.ambiguous.append({"detection": det_json, "products": products.to_dict(orient="records")})
+    def append(self, det_progress: dict, products: pd.DataFrame):
+        if products is None or len(products) == 0:
+            self.erroneous.append(det_progress)
+        elif len(products) != 1:
+            self.ambiguous.append({"detection": det_progress, "products": products.to_dict(orient="records")})
         else:
             self.csv_data.append(OutputCSVRow(
                 cardmarketId=products['cardmarketId'].iloc[0],
@@ -43,9 +43,9 @@ class YugiohCSVBuilder:
                 name=products['name'].iloc[0],
                 set=products['expansion'].iloc[0],
                 cn=products['collectorNumber'].iloc[0],
-                condition="NM", #TODO set static via arg
-                language=det_json["language"],
-                isFirstEd=det_json["first_ed_0"] or det_json["first_ed_1"]
+                condition=det_progress["condition"],
+                language=det_progress["language"],
+                isFirstEd=det_progress["first_ed_0"][0] or det_progress["first_ed_1"][0]
             ))
 
     def _new_trace_id(self) -> str:
