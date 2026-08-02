@@ -84,8 +84,17 @@ adb forward tcp:8080 tcp:8080
 
 Make sure `adb forward tcp:8080 tcp:8080` is active (see [Camera setup](#camera-setup)) before starting the client.
 
+Start service:
+
 ```bash
 docker compose up -d
+```
+
+Start client:
+```bash
+cd ./client
+python -m venv venv
+pip install -r requirements.txt
 python -m client.inference.main --condition NM
 ```
 
@@ -96,7 +105,7 @@ The first build takes a few minutes — PaddleOCR models are downloaded and bake
 | Flag | Description |
 |---|---|
 | `--condition` | Card condition (e.g. `NM`, `EX`) applied to **all** cards in this run. Condition detection isn't implemented yet, so this is set once at startup rather than per card — works well if you sort your physical cards by condition beforehand. |
-| `--debug` | Saves every processing step of every frame, viewable afterward via `client.debug.main` (this is how the [pipeline walkthrough](#pipeline) screenshot was created). |
+| `--debug` | Saves every processing step of every frame, viewable afterward via `streamlit run client/debug_ui/main.py` (this is how the [pipeline walkthrough](#pipeline) screenshot was created). |
 | `--record` | Records the stream as a video with progress bars overlaid (see the [demo](#demo) above). |
 | `--frame-skip` | Only processes every Nth frame to reduce load. Default: `10`. |
 
