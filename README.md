@@ -104,6 +104,8 @@ Start service:
 docker compose up -d
 ```
 
+The first build takes a few minutes — PaddleOCR models are downloaded and baked into the image. Subsequent starts are fast.
+
 Start client:
 ```bash
 cd ./client
@@ -111,8 +113,6 @@ python -m venv venv
 pip install -r requirements.txt
 python -m client.inference.main --condition NM
 ```
-
-The first build takes a few minutes — PaddleOCR models are downloaded and baked into the image. Subsequent starts are fast.
 
 ### Arguments
 
