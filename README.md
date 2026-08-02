@@ -24,6 +24,18 @@ TCG Scanner is an end-to-end **computer vision** pipeline for **real-time** trad
 - Matches converged results against a **product catalog**
 - Exports detection + product data as a **CSV**, ready for automated listing on resale platforms
 
+## Table of Contents
+
+- [Demo](#demo)
+- [Motivation](#motivation)
+- [Pipeline](#pipeline)
+- [Output](#output)
+- [Requirements](#requirements)
+  - [Camera setup](#camera-setup)
+- [Usage](#usage)
+  - [Arguments](#arguments)
+- [Related](#related)
+
 ## Demo
 
 https://github.com/user-attachments/assets/6c7d8d41-580f-42e2-bf93-c42a8eca71f6
