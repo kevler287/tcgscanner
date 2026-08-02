@@ -26,6 +26,8 @@ TCG Scanner is an end-to-end **computer vision** pipeline for **real-time** trad
 
 ## Demo
 
+https://github.com/user-attachments/assets/6c7d8d41-580f-42e2-bf93-c42a8eca71f6
+
 ## Motivation
 
 I've loved Yu-Gi-Oh since I was a kid, and recently turned that into a small side business selling cards. The problem: the marketplace I sell on only supports manual, click-by-click listing — no bulk tools, no shortcuts. For more than a handful of cards, that's both slow and genuinely exhausting on the eyes.
