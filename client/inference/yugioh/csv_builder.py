@@ -49,18 +49,19 @@ class YugiohCSVBuilder:
             ))
 
     def _new_trace_id(self) -> str:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        timestamp = datetime.now().strftime("%Y%m%d")
         return str(timestamp)
 
     def build(self):
-        out_path = self.dest_path / self._new_trace_id()
-        out_path.mkdir(parents=True, exist_ok=True)
+        self.dest_path.mkdir(parents=True, exist_ok=True)
 
+        file_path = self.dest_path / f"{self._new_trace_id()}.csv"
         df = pd.DataFrame([asdict(row) for row in self.csv_data])
-        df.to_csv(str(out_path / "bulklist.csv"), index=False)
 
-        with open(out_path / "erroneous.json", "w") as f:
-            json.dump(self.erroneous, f, indent=2)
-
-        with open(out_path / "ambiguous.json", "w") as f:
-            json.dump(self.ambiguous, f, indent=2) 
+        file_exists = file_path.exists()
+        df.to_csv(
+            str(file_path),
+            mode="a" if file_exists else "w",
+            header=not file_exists,
+            index=False,
+        )

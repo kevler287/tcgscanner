@@ -7,6 +7,7 @@ import cv2
 import httpx
 import imageio
 import numpy as np
+import pandas as pd
 
 from client.inference.common.catalog_srv import ProductCatalogService
 from client.inference.common.detectionstate_enum import DetectionState
@@ -35,16 +36,26 @@ def parse_args():
     parser.add_argument("--condition", required=True, type=str, help="default condition set for all scanned cards")
     return parser.parse_args()
 
-def build_progress_panel(progress: dict, status: DetectionState, panel_height: int) -> np.ndarray:
+def build_progress_panel(products: pd.DataFrame, progress: dict, status: DetectionState, panel_height: int) -> np.ndarray:
     if status in [DetectionState.IDENTIFIED, DetectionState.AMBIGUOUS, DetectionState.ERRONEOUS]:
         panel = np.full((panel_height, PANEL_WIDTH, 3), 30, dtype=np.uint8)
 
         center_y = panel_height // 2
 
-        text = status.name
+        if status == DetectionState.IDENTIFIED:
+            exp_code = products["expansionCode"].iloc[0]
+            cn = products['collectorNumber'].iloc[0]
+            text = f"{exp_code}-{cn}"
+        else:
+            text = status.name
         text_size = cv2.getTextSize(text, FONT, 2, 3)[0]
         text_x = (PANEL_WIDTH - text_size[0]) // 2
         cv2.putText(panel, text, (text_x, center_y + 20), FONT, 2, status.get_color_gbr(), 3, cv2.LINE_AA)
+        if status == DetectionState.IDENTIFIED:
+            name = products['name'].iloc[0]
+            name_size = cv2.getTextSize(name, FONT, 1.5, 2)[0]
+            name_x = (PANEL_WIDTH - name_size[0]) // 2
+            cv2.putText(panel, name, (name_x, center_y + 60), FONT, 1.5, status.get_color_gbr(), 2, cv2.LINE_AA)
 
         return panel
     elif status == DetectionState.RUNNING:
@@ -81,7 +92,7 @@ def process_frame(condition: str, frame: np.ndarray, debug: bool):
 
     # when timer is set (=card was detected) wait 2 sec for new card before scanning
     if ts is not None and (time.time() - ts) < 2:
-        return build_progress_panel({}, None, panel_height=frame.shape[0])
+        return build_progress_panel(None, {}, None, panel_height=frame.shape[0])
 
     # Encode frame and send to service
     start = time.time()
@@ -100,6 +111,7 @@ def process_frame(condition: str, frame: np.ndarray, debug: bool):
         editions = data.get("editions", {})
 
         card_scanned, progress = stabilizer.forward(ocr_output=text, edition_dets=editions)
+        products = None
         status = DetectionState.RUNNING
         if card_scanned:
             status, products = find_product_from_detection(det_json=progress)
@@ -108,7 +120,7 @@ def process_frame(condition: str, frame: np.ndarray, debug: bool):
             stabilizer.clear()
             ts = time.time()
 
-        progress_panel = build_progress_panel(progress, status, panel_height=frame.shape[0])
+        progress_panel = build_progress_panel(products, progress, status, panel_height=frame.shape[0])
         return progress_panel
     else:
         print(response.status_code)
@@ -142,7 +154,7 @@ def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) 
     cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
     writer = None
 
-    progress_panel = build_progress_panel({}, status=None, panel_height=480)  # placeholder, adjust height
+    progress_panel = build_progress_panel(None, {}, status=None, panel_height=480)  # placeholder, adjust height
 
     frames = []
     counter = 0
@@ -159,7 +171,7 @@ def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) 
                 if next_panel is not None: progress_panel = next_panel
 
             display = build_live_ui(img, progress_panel)
-            frames.append(display)
+            # frames.append(display)
             cv2.imshow("Inference  –  [N] Next  [Q] Quit", display)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
