@@ -151,8 +151,7 @@ def find_product_from_detection(det_json: dict):
 
 def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) -> list:
     cap = cv2.VideoCapture("http://127.0.0.1:8080/video")
-    cv2.namedWindow("Inference  –  [N] Next  [Q] Quit", cv2.WINDOW_NORMAL)
-    writer = None
+    cv2.namedWindow("tcgscanner", cv2.WINDOW_NORMAL)
 
     progress_panel = build_progress_panel(None, {}, status=None, panel_height=480)  # placeholder, adjust height
 
@@ -164,7 +163,7 @@ def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) 
             if not ret:
                 break
 
-            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
             if counter % frame_skip == 0:
                 next_panel = process_frame(frame=img, debug=debug, condition=condition)
@@ -172,7 +171,7 @@ def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) 
 
             display = build_live_ui(img, progress_panel)
             # frames.append(display)
-            cv2.imshow("Inference  –  [N] Next  [Q] Quit", display)
+            cv2.imshow("tcgscanner", display)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 

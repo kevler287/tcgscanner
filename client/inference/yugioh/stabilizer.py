@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
 
 from client.inference.common.generic_stabilizers import BinaryStabilizer, TextStabilizer
-from client.inference.common.text_normalizer import letter_to_number
+from client.inference.common.text_normalizer import letter_to_number, insert_dash_before_lang
 from shared.tcg_config import TCGConfig
 
 class YugiohStabilizer:
@@ -38,7 +38,9 @@ class YugiohStabilizer:
     def forward(self, ocr_output: dict, edition_dets: dict):
         setcode_dets = [(letter_to_number(sc), prob) for sc, prob in ocr_output.get("set_code", [])]
         for sc_det in setcode_dets:
-            if "-" not in sc_det[0]: continue
+            if "-" not in sc_det[0]: 
+                corrected = insert_dash_before_lang(sc_det[0])
+                sc_det = (corrected, sc_det[1])
             self.setcode_stabilizer.forward(sc_det)
 
         for name_det in ocr_output.get("name", []):

@@ -3,6 +3,7 @@ from client.inference.common.text_normalizer import *
 SINGLE_CHAR_LANG_CODES = {
     "E": "English",
     "G": "German",
+    "6": "German"
 }
 
 DOUBLE_CHAR_LANG_CODES = {

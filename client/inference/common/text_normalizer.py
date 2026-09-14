@@ -1,12 +1,16 @@
 from itertools import product
+import re
 
 
 AMBIGUOUS_CHARS = {
     'O': '0',
     'I': '1',
+    'T': '1',
+    'L': '1',
     'A': '4',
     'S': '5',
     'G': '6',
+    'Z': '7',
     'B': '8',
 }
 
@@ -21,6 +25,9 @@ def letter_to_number(text: str) -> str:
     for l, n in AMBIGUOUS_CHARS.items():
         text = text.replace(l, n)
     return text
+
+def insert_dash_before_lang(s: str) -> str:
+    return re.sub(r"(DE|EN)(\d+)$", r"-\1\2", s)
 
 def generate_ambiguous_permutations(text: str) -> list[str]:
     char_options = [
