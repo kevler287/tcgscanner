@@ -11,6 +11,9 @@ def new_trace_id() -> str:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     return str(timestamp)
 
+def get_date_str() -> str:
+    timestamp = datetime.now().strftime("%Y_%m_%d")
+    return str(timestamp)
 
 def _unit_dir(trace_id: str) -> Path:
     d = _DEBUG_DIR / trace_id
@@ -22,6 +25,12 @@ def save_frame(trace_id: str, stage_name: str, frame: np.ndarray) -> None:
     path = _unit_dir(trace_id) / f"{stage_name}.jpg"
     cv2.imwrite(str(path), frame)
 
+def save_crop(crop: np.ndarray) -> None:
+    trace_id = get_date_str()
+    d = _unit_dir(trace_id)
+    index = len(list(d.iterdir()))
+    path = d / f"{index}.jpg"
+    cv2.imwrite(str(path), crop)
 
 def save_crops(trace_id: str, stage_name: str, crops: list[np.ndarray]) -> None:
     for i, crop in enumerate(crops):

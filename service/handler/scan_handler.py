@@ -20,12 +20,17 @@ def handle_frame(request: Request, img: np.ndarray):
     text, ocr_crops = request.app.state.ocr.extract(card_image=warped)
     edition_dets, ed_crops = request.app.state.ed_check.predict(frame=warped)
 
+    set_crop = ocr_crops.get("set_code")
+    if set_crop is not None and request.app.state.frame_counter % 10 == 0:
+        volume_writer.save_crop(crop=set_crop)
     if request.app.state.debug:
         volume_writer.save_frame(trace_id, "02_warped", warped)
-        volume_writer.save_crops(trace_id, "03_ocr_crop", ocr_crops)
+        volume_writer.save_crops(trace_id, "03_ocr_crop", ocr_crops.values())
         volume_writer.save_json(trace_id, "03_ocr_result", {"text": text})
         volume_writer.save_crops(trace_id, "04_edition_crop", ed_crops)
         volume_writer.save_json(trace_id, "04_edition_result", {"editions": edition_dets})
+
+    request.app.state.frame_counter += 1
     
     return {
         "text": text,

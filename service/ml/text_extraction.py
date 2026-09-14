@@ -32,10 +32,12 @@ class TextExtractor:
 
         raw = self.ocr.ocr(crops, det=False)
         extracted = {}
+        named_crops = {}
         for name, result in zip(names, raw):
             extracted[name] = result
+            named_crops[name] = crop
 
-        return extracted, crops
+        return extracted, named_crops
 
     def _preprocess(self, crop: np.ndarray) -> np.ndarray:
         gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)

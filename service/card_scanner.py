@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
     app.state.ocr = TextExtractor(use_gpu=True, tcg_config=default_config)
     app.state.ed_check = EditionClassifier(model_path="ml/models_ed_check_1.1.3.pt", tcg_config=default_config)
     app.state.ready = True
+    app.state.frame_counter = 0
     yield
 
 app = FastAPI(lifespan=lifespan)
