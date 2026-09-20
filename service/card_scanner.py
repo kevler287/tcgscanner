@@ -63,3 +63,18 @@ async def scan(request: Request, file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Invalid image file")
     
     return scan_handler.handle_frame(request=request, img=img)
+
+@app.post("/ocr")
+async def extract_text(request: Request, file: UploadFile = File(...)):
+    if not request.app.state.ready:
+        raise HTTPException(status_code=503, detail="Models loading")
+    
+    # Load image from multipart
+    contents = await file.read()
+    np_arr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    
+    if img is None:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+    
+    return request.app.state.ocr.extract_raw(img=img)

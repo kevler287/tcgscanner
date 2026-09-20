@@ -48,3 +48,6 @@ class TextExtractor:
             gray = clahe.apply(gray)
 
         return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+    def extract_raw(self, img: np.ndarray):
+        return self.ocr.ocr(img)
