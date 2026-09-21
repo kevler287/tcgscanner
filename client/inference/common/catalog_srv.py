@@ -20,12 +20,13 @@ class ProductCatalogService:
             return remaining_entries
 
         remaining_entries = remaining_entries[remaining_entries["collectorNumber"].isin(cn_opts)]
+        return remaining_entries
 
-        if len(remaining_entries) <= 1:
-            return remaining_entries
+        # if len(remaining_entries) <= 1:
+        #     return remaining_entries
 
-        filtered = remaining_entries[
-            remaining_entries["name"].apply(lambda n: SequenceMatcher(None, card_name, n).ratio() > 0.5)
-        ]
+        # filtered = remaining_entries[
+        #     remaining_entries["name"].apply(lambda n: SequenceMatcher(None, card_name, n).ratio() > 0.5)
+        # ]
 
-        return filtered
+        # return filtered

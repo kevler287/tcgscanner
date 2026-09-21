@@ -22,7 +22,7 @@ def handle_frame(request: Request, img: np.ndarray):
 
     set_crop = ocr_crops.get("set_code")
     if set_crop is not None and request.app.state.frame_counter % 10 == 0:
-        volume_writer.save_crop(crop=set_crop)
+        volume_writer.save_crop(crop=warped)
     if request.app.state.debug:
         volume_writer.save_frame(trace_id, "02_warped", warped)
         volume_writer.save_crops(trace_id, "03_ocr_crop", ocr_crops.values())
