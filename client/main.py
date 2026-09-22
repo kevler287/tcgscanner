@@ -9,11 +9,11 @@ import imageio
 import numpy as np
 import pandas as pd
 
-from client.inference.common.catalog_srv import ProductCatalogService
-from client.inference.common.detectionstate_enum import DetectionState
-from client.inference.yugioh.setcode_resolver import resolve_setcode
-from client.inference.yugioh.stabilizer import YugiohStabilizer
-from client.inference.yugioh.csv_builder import YugiohCSVBuilder
+from tcgs.common.catalog_srv import ProductCatalogService
+from tcgs.common.detectionstate_enum import DetectionState
+from tcgs.yugioh.setcode_resolver import resolve_setcode
+from tcgs.yugioh.stabilizer import YugiohStabilizer
+from tcgs.yugioh.csv_builder import YugiohCSVBuilder
 from shared.tcg_config import TCGConfig
 
 SERVICE_URL = "http://localhost:8000"

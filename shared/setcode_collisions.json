@@ -1,0 +1,25 @@
+{
+  "LOB": [
+    {"lang_codes": ["E", "G"], "condition": "'V.1' in name"},
+    {"lang_codes": [], "condition": "'V.2' in name"},
+    {"lang_codes": ["A"], "condition": "'V.3' in name"},
+    {"lang_codes": ["EN"], "condition": "'V.4' in name"},
+    {"lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "expansionId == '5339'"}
+  ],
+  "MRD": [
+    {"lang_codes": ["E", "G", "F"], "condition": "'V.1' in name"},
+    {"lang_codes": [], "condition": "'V.2' in name"},
+    {"lang_codes": ["EN"], "condition": "'V.3' in name"},
+    {"lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "expansionId == '5340'"}
+  ],
+  "PSV": [
+    {"lang_codes": ["E", "G"], "condition": "'V.1' in name"},
+    {"lang_codes": [], "condition": "'V.2' in name"},
+    {"lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "expansionId == '5342'"}
+  ],
+  "IOC": [
+    {"lang_codes": [], "condition": "'V.1' in name"},
+    {"lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "'V.2' in name"},
+    {"lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "expansionId == '5344'"}
+  ]
+}

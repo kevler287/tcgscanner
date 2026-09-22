@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
 
-from client.inference.common.generic_stabilizers import BinaryStabilizer, TextStabilizer
-from client.inference.common.text_normalizer import letter_to_number, insert_dash_before_lang
+from tcgs.common.generic_stabilizers import BinaryStabilizer, TextStabilizer
+from tcgs.common.text_normalizer import letter_to_number, insert_dash_before_lang
 from shared.tcg_config import TCGConfig
 
 class YugiohStabilizer:

@@ -1,4 +1,4 @@
-from client.inference.common.text_normalizer import *
+from tcgs.common.text_normalizer import *
 
 SINGLE_CHAR_LANG_CODES = {
     "E": "English",
