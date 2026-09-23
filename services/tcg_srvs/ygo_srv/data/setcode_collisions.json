@@ -1,0 +1,78 @@
+{
+  "LOB": [
+    {"copyright": 1996, "lang_codes": ["E", "G"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},
+    {"copyright": 1996, "lang_codes": ["A"], "condition": "'V.3' in name"},
+    {"copyright": 1996, "lang_codes": ["EN"], "condition": "'V.4' in name"},
+    {"copyright": 2020, "lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "'25th Anniversary Edition' in expansion"}
+  ],
+  "MRD": [
+    {"copyright": 1996, "lang_codes": ["E", "G", "F"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},
+    {"copyright": 1996, "lang_codes": ["EN"], "condition": "'V.3' in name"},
+    {"copyright": 2020, "lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "'25th Anniversary Edition' in expansion"}
+  ],
+  "PSV": [
+    {"copyright": 1996, "lang_codes": ["E", "G"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},
+    {"copyright": 2020, "lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "'25th Anniversary Edition' in expansion"}
+  ],
+  "IOC": [
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "'V.2' in name"},
+    {"copyright": 2020, "lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "'25th Anniversary Edition' in expansion"}
+  ],
+  "LODT": [
+    {"copyright": 1996, "condition":"'V.1' in name or V.3 in name"},
+    {"copyright": 2020, "condition":"'V.2' in name or V.4 in name"}
+  ],
+  "LON": [
+    {"copyright": 1996, "lang_codes": ["E", "G"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},
+    {"copyright": 1996, "lang_codes": ["EN"], "condition": "'V.3' in name"}
+  ],
+  "DCR": [
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": ["EN", "DE", "FR", "IT"], "condition": "'V.2' in name"}
+  ],
+  "SRL": [
+    {"copyright": 1996, "lang_codes": ["G"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},
+    {"copyright": 1996, "lang_codes": ["EN"], "condition": "'V.3' in name"},
+    {"copyright": 2020, "lang_codes": ["EN", "DE", "FR", "IT", "SP"], "condition": "'25th Anniversary Edition' in expansion"}
+  ],
+  "MRL":[
+    {"copyright": 1996, "lang_codes": ["E"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"}
+  ],
+  "RP01": [
+    {"copyright": 1996, "condition":"'V.1' in name"},
+    {"copyright": 2020, "condition":"'V.2' in name"}
+  ],
+  "RP02": [
+    {"copyright": 1996, "condition":"'V.1' in name"},
+    {"copyright": 2020, "condition":"'V.2' in name"}
+  ],
+  "LDD": [
+    {"copyright": 1996, "lang_codes": ["F", "I"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": ["C", "S"], "condition": "'V.2' in name"}
+  ],
+  "SDK": [
+    {"copyright": 1996, "lang_codes": ["E", "G"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},
+    {"copyright": 1996, "lang_codes": ["A"], "condition": "'V.3' in name"}
+  ],
+  "SDY": [
+    {"copyright": 1996, "lang_codes": ["E", "G"], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},
+    {"copyright": 1996, "lang_codes": ["A"], "condition": "'V.3' in name"}
+  ],
+  "DPKB": [
+    {"new_layout": false, "condition": "'V.1' in name"},
+    {"new_layout": true, "condition": "'V.2' in name"}
+  ],
+  "DPYG": [
+    {"new_layout": false, "condition": "'V.1' in name"},
+    {"new_layout": true, "condition": "'V.2' in name"}
+  ]
+}

@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: service/Dockerfile
+      dockerfile: services/inference_srv/Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -16,4 +16,14 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    restart: unless-stopped
+
+  ygo_srv:
+    build:
+      context: .
+      dockerfile: services/tcg_srvs/ygo_srv/Dockerfile
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./services/tcg_srvs/ygo_srv/data:/data
     restart: unless-stopped

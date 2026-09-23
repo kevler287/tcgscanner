@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir \
     -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
 
 # Install remaining dependencies via requirements.txt
-COPY service/requirements.txt .
+COPY services/inference_srv/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Cache PaddleOCR models at build time
@@ -28,7 +28,7 @@ RUN python3 -c "from ultralytics import YOLO"
 
 WORKDIR /app
 COPY ../shared ./shared
-COPY ./service .
+COPY ./services/inference_srv .
 
 HEALTHCHECK --interval=5s --timeout=3s --start-period=60s \
     CMD curl -f http://localhost:8000/health/ready || exit 
