@@ -5,7 +5,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-_DEBUG_DIR = Path(os.environ["DEBUG_DIR"])
+_DATA_DIR = Path(os.environ["DATA_DIR"])
 
 def new_trace_id() -> str:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -16,7 +16,7 @@ def get_date_str() -> str:
     return str(timestamp)
 
 def _unit_dir(trace_id: str) -> Path:
-    d = _DEBUG_DIR / trace_id
+    d = _DATA_DIR / trace_id
     d.mkdir(parents=True, exist_ok=True)
     return d
 

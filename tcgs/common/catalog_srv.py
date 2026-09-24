@@ -1,11 +1,11 @@
 from difflib import SequenceMatcher
 from typing import List
 import pandas as pd
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 
 class ProductCatalogService:
 
-    def __init__(self, config: TCGConfig):
+    def __init__(self, config: TCGLayoutConfig):
         self.config = config
         self.catalog = self._load_catalog(config.catalog)
 

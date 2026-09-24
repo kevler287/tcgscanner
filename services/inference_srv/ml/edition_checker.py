@@ -12,11 +12,11 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision import models, transforms
 
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 
 
 class EditionClassifier:
-    def __init__(self, model_path, tcg_config: TCGConfig):
+    def __init__(self, model_path, tcg_config: TCGLayoutConfig):
         """
         Load a trained ResNet18 checkpoint (as saved by train()) and prepare it for inference.
 

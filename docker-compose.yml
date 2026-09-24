@@ -6,9 +6,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DEBUG_DIR: /debug
+      DATA_DIR: /data
     volumes:
-      - ./debug:/debug
+      - ./services/inference_srv/data:/data
     deploy:
       resources:
         reservations:

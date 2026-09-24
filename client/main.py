@@ -14,7 +14,7 @@ from tcgs.common.detectionstate_enum import DetectionState
 from tcgs.yugioh.setcode_resolver import resolve_setcode
 from tcgs.yugioh.stabilizer import YugiohStabilizer
 from tcgs.yugioh.csv_builder import YugiohCSVBuilder
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 
 SERVICE_URL = "http://localhost:8000"
 PANEL_WIDTH = 900
@@ -24,7 +24,7 @@ FONT = cv2.FONT_HERSHEY_SIMPLEX
 
 stabilizer = YugiohStabilizer()
 csv_builder = YugiohCSVBuilder()
-config = TCGConfig.load("shared/yugioh.json")
+config = TCGLayoutConfig.load("shared/yugioh_layout.json")
 catalog_srv = ProductCatalogService(config=config)
 ts = None
 
@@ -187,7 +187,7 @@ def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) 
 def main():
     args = parse_args()
 
-    with open("shared/yugioh.json", "r") as f:
+    with open("shared/yugioh_layout.json", "r") as f:
         data = json.load(f)
     response = httpx.post(
         f"{SERVICE_URL}/configure",

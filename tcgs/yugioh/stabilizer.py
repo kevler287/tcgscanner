@@ -2,12 +2,12 @@ from typing import Dict, Tuple
 
 from tcgs.common.generic_stabilizers import BinaryStabilizer, TextStabilizer
 from tcgs.common.text_normalizer import letter_to_number, insert_dash_before_lang
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 
 class YugiohStabilizer:
 
     def __init__(self):
-        self.config = TCGConfig.load("shared/yugioh.json")
+        self.config = TCGLayoutConfig.load("shared/yugioh_layout.json")
 
         self.setcode_stabilizer = TextStabilizer(stability_factor=0.7)
         self.name_stabilizer = TextStabilizer(stability_factor=0.5)

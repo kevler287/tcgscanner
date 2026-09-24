@@ -3,7 +3,7 @@ from typing import Dict, List
 from dataclasses import asdict, dataclass
 
 @dataclass
-class TCGConfig:
+class TCGLayoutConfig:
     tcg: str
     catalog: str
     card_w: int
@@ -15,7 +15,7 @@ class TCGConfig:
         return json.dumps(asdict(self))
 
     @classmethod
-    def load(cls, path: str) -> "TCGConfig":
+    def load(cls, path: str) -> "TCGLayoutConfig":
         with open(path, "r") as f:
             data = json.load(f)
         return cls(**data)

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Response
 from contextlib import asynccontextmanager
 from ml.edition_checker import EditionClassifier
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 from ml.card_segmentation import CardSegmentor
 from ml.text_extraction import TextExtractor
 from handler import scan_handler
@@ -13,7 +13,7 @@ import traceback
 async def lifespan(app: FastAPI):
     app.state.ready = False
     app.state.debug = False
-    default_config = TCGConfig.load("shared/yugioh.json")
+    default_config = TCGLayoutConfig.load("shared/yugioh_layout.json")
     app.state.segmentor = CardSegmentor(model_path="ml/v1.pt", tcg_config=default_config)
     app.state.ocr = TextExtractor(use_gpu=True, tcg_config=default_config)
     app.state.ed_check = EditionClassifier(model_path="ml/models_ed_check_1.1.3.pt", tcg_config=default_config)
@@ -42,7 +42,7 @@ async def configure(request: Request):
         raise HTTPException(status_code=503, detail="Models loading")
     try:
         cfg_json = await request.json()
-        new_config = TCGConfig(**cfg_json)
+        new_config = TCGLayoutConfig(**cfg_json)
         request.app.state.segmentor.tcg_config = new_config
         request.app.state.ocr.tcg_config = new_config
     except:

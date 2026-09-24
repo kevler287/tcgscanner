@@ -7,10 +7,10 @@ import json
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 
-DEBUG_DIR = Path("./debug")
-YUGIOH_CONFIG = TCGConfig.load("shared/yugioh.json")
+DEBUG_DIR = Path(".services/inference_srv/data")
+YUGIOH_CONFIG = TCGLayoutConfig.load("shared/yugioh_layout.json")
 font = ImageFont.load_default(size=25)
 
 st.set_page_config(layout="wide")

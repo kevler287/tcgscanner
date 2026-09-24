@@ -3,10 +3,10 @@ import cv2
 from paddleocr import PaddleOCR
 import numpy as np
 
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 
 class TextExtractor:
-    def __init__(self, tcg_config: TCGConfig, use_gpu: bool = True):
+    def __init__(self, tcg_config: TCGLayoutConfig, use_gpu: bool = True):
         self.ocr = PaddleOCR(
             use_angle_cls=False,
             use_gpu=use_gpu,

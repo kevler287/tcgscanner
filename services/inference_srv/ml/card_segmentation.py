@@ -2,10 +2,10 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
-from shared.tcg_config import TCGConfig
+from shared.tcg_layout_model import TCGLayoutConfig
 
 class CardSegmentor:
-    def __init__(self, model_path: str, tcg_config: TCGConfig):
+    def __init__(self, model_path: str, tcg_config: TCGLayoutConfig):
         self.model = YOLO(model_path)
         self.model.to("cuda")
         self.yugioh_config = tcg_config
