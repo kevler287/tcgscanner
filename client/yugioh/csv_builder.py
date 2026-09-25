@@ -28,25 +28,18 @@ class YugiohCSVBuilder:
     def __init__(self, dest_path = "output/yugioh/"):
         self.dest_path = Path(dest_path)
         self.csv_data: List[OutputCSVRow] = []
-        self.ambiguous: List[dict] = []
-        self.erroneous: List[dict] = []
 
-    def append(self, det_progress: dict, products: pd.DataFrame):
-        if products is None or len(products) == 0:
-            self.erroneous.append(det_progress)
-        elif len(products) != 1:
-            self.ambiguous.append({"detection": det_progress, "products": products.to_dict(orient="records")})
-        else:
-            self.csv_data.append(OutputCSVRow(
-                cardmarketId=products['cardmarketId'].iloc[0],
-                quantity=1,
-                name=products['name'].iloc[0],
-                set=products['expansion'].iloc[0],
-                cn=products['collectorNumber'].iloc[0],
-                condition=det_progress["condition"],
-                language=det_progress["language"],
-                isFirstEd=det_progress["first_ed_0"][0] or det_progress["first_ed_1"][0]
-            ))
+    def append(self, product: dict):
+        self.csv_data.append(OutputCSVRow(
+            cardmarketId=product['cardmarketId'],
+            quantity=1,
+            name=product['name'],
+            set=product['expansion'],
+            cn=product['collectorNumber'],
+            condition=product["x-condition"],
+            language=product["x-language"],
+            isFirstEd=product["x-isfirst"]
+        ))
 
     def _new_trace_id(self) -> str:
         timestamp = datetime.now().strftime("%Y%m%d")

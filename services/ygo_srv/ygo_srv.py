@@ -21,6 +21,6 @@ app = FastAPI(lifespan=lifespan)
 def health():
     return {"status": "ok"}
 
-@app.post("/identify")
+@app.post("/search")
 def identify_ygo_card(request: Request, set_code: str = Body(...)):
     return product_handler.identify_product(request=request, setcode=set_code)

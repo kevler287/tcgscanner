@@ -1,6 +1,5 @@
 import argparse
 import json
-import subprocess
 import time
 
 import cv2
@@ -9,14 +8,13 @@ import imageio
 import numpy as np
 import pandas as pd
 
-from tcgs.common.catalog_srv import ProductCatalogService
-from tcgs.common.detectionstate_enum import DetectionState
-from tcgs.yugioh.setcode_resolver import resolve_setcode
-from tcgs.yugioh.stabilizer import YugiohStabilizer
-from tcgs.yugioh.csv_builder import YugiohCSVBuilder
+from client.common.detectionstate_enum import DetectionState
+from client.yugioh.stabilizer import YugiohStabilizer
+from client.yugioh.csv_builder import YugiohCSVBuilder
 from shared.tcg_layout_model import TCGLayoutConfig
 
-SERVICE_URL = "http://localhost:8000"
+INFERENCE_SRV_URL = "http://localhost:8000"
+YGO_SRV_URL = "http://localhost:8001"
 PANEL_WIDTH = 900
 BAR_HEIGHT = 60
 BAR_PADDING = 30
@@ -25,7 +23,6 @@ FONT = cv2.FONT_HERSHEY_SIMPLEX
 stabilizer = YugiohStabilizer()
 csv_builder = YugiohCSVBuilder()
 config = TCGLayoutConfig.load("shared/yugioh_layout.json")
-catalog_srv = ProductCatalogService(config=config)
 ts = None
 
 def parse_args():
@@ -36,26 +33,24 @@ def parse_args():
     parser.add_argument("--condition", required=True, type=str, help="default condition set for all scanned cards")
     return parser.parse_args()
 
-def build_progress_panel(products: pd.DataFrame, progress: dict, status: DetectionState, panel_height: int) -> np.ndarray:
+def build_progress_panel(product: dict, progress: dict, status: DetectionState, panel_height: int) -> np.ndarray:
     if status in [DetectionState.IDENTIFIED, DetectionState.AMBIGUOUS, DetectionState.ERRONEOUS]:
         panel = np.full((panel_height, PANEL_WIDTH, 3), 30, dtype=np.uint8)
 
         center_y = panel_height // 2
 
-        if status == DetectionState.IDENTIFIED:
-            exp_code = products["expansionCode"].iloc[0]
-            cn = products['collectorNumber'].iloc[0]
-            text = f"{exp_code}-{cn}"
-        else:
-            text = status.name
         text_size = cv2.getTextSize(text, FONT, 2, 3)[0]
         text_x = (PANEL_WIDTH - text_size[0]) // 2
-        cv2.putText(panel, text, (text_x, center_y + 20), FONT, 2, status.get_color_gbr(), 3, cv2.LINE_AA)
         if status == DetectionState.IDENTIFIED:
-            name = products['name'].iloc[0]
-            name_size = cv2.getTextSize(name, FONT, 1.5, 2)[0]
-            name_x = (PANEL_WIDTH - name_size[0]) // 2
-            cv2.putText(panel, name, (name_x, center_y + 60), FONT, 1.5, status.get_color_gbr(), 2, cv2.LINE_AA)
+            exp_code = product["expansionCode"]
+            cn = product['collectorNumber']
+            lang = product['x-language']
+            edition = "1st Edition" if product['x-isfirst'] else "Unlimited"
+            text = f"{exp_code}-{cn}\n{lang}\n{edition}"
+            cv2.putText(panel, text, (text_x, center_y + 20), FONT, 2, status.get_color_gbr(), 3, cv2.LINE_AA)
+        else:
+            text = status.name
+            cv2.putText(panel, text, (text_x, center_y + 20), FONT, 2, status.get_color_gbr(), 3, cv2.LINE_AA)
 
         return panel
     elif status == DetectionState.RUNNING:
@@ -98,56 +93,52 @@ def process_frame(condition: str, frame: np.ndarray, debug: bool):
     start = time.time()
     _, buffer = cv2.imencode(".jpg", frame)
     response = httpx.post(
-        f"{SERVICE_URL}/scan",
+        f"{INFERENCE_SRV_URL}/scan",
         files={"file": ("frame.jpg", buffer.tobytes(), "image/jpeg")}
     )
     end = time.time()
     if debug:
         print(f"Inference: {end-start}s")
 
-    if response.status_code == 200:
-        data = response.json()
-        text = data.get("text", {})
-        editions = data.get("editions", {})
-
-        card_scanned, progress = stabilizer.forward(ocr_output=text, edition_dets=editions)
-        products = None
-        status = DetectionState.RUNNING
-        if card_scanned:
-            status, products = find_product_from_detection(det_json=progress)
-            progress["condition"] = condition
-            csv_builder.append(det_progress=progress, products=products)
-            stabilizer.clear()
-            ts = time.time()
-
-        progress_panel = build_progress_panel(products, progress, status, panel_height=frame.shape[0])
-        return progress_panel
-    else:
+    if response.status_code != 200:
         print(response.status_code)
         return None
-
-def find_product_from_detection(det_json: dict):  
-    set_code = det_json["set_code"][0]
-    name = det_json["name"][0]
-    first_ed_0 = det_json["first_ed_0"][0]
-    first_ed_1 = det_json["first_ed_1"][0]
-
-    if first_ed_0 and first_ed_1:
-        det_json["error"] = "1st Edition label was detected in both locations"
-        return DetectionState.ERRONEOUS, None
     
-    ec_opts, language, cn_opts = resolve_setcode(setcode=set_code)
-    det_json.update({"ec_opts": ec_opts, "language": language, "cn_opts": cn_opts})
+    data = response.json()
+    text = data.get("text", {})
+    editions = data.get("editions", {})
 
-    if any(x is None for x in [ec_opts, language, cn_opts]):
-        det_json["error"] = "Card could not be identified due to set code resolve error"
-        return DetectionState.ERRONEOUS, None
+    status = DetectionState.RUNNING
+    card_scanned, progress = stabilizer.forward(ocr_output=text, edition_dets=editions)
+    if not card_scanned:
+        return build_progress_panel(None, progress, status, panel_height=frame.shape[0])
+    
+    set_code = progress["set_code"][0]
+    first_ed_0 = progress["first_ed_0"][0]
+    first_ed_1 = progress["first_ed_1"][0]
+    response = httpx.post(
+        f"{INFERENCE_SRV_URL}/search",
+        json={"set_code": set_code}
+    )
+    if response.status_code == 500:
+        print("ygo-srv crashed")
+        return None
+    if response.status_code == 404:
+        print(response)
+        return build_progress_panel(None, progress, DetectionState.ERRONEOUS, panel_height=frame.shape[0])
+    if response.status_code == 409:
+        print(response)
+        return build_progress_panel(None, progress, DetectionState.AMBIGUOUS, panel_height=frame.shape[0])
 
-    products = catalog_srv.find_yugioh_card(card_name=name, ec_opts=ec_opts, cn_opts=cn_opts)
-    if len(products) != 1:
-        return DetectionState.AMBIGUOUS, products
+    product = response.json()
+    product["x-isfirst"] = first_ed_0 or first_ed_1
+    product["x-condition"] = condition
+    csv_builder.append(product=product)
+    stabilizer.clear()
+    ts = time.time()
 
-    return DetectionState.IDENTIFIED, products
+    progress_panel = build_progress_panel(product, progress, DetectionState.IDENTIFIED, panel_height=frame.shape[0])
+    return progress_panel
 
 def run_capture_loop(condition: str, debug: bool = False, frame_skip: int = 10) -> list:
     cap = cv2.VideoCapture("http://127.0.0.1:8080/video")
@@ -190,13 +181,13 @@ def main():
     with open("shared/yugioh_layout.json", "r") as f:
         data = json.load(f)
     response = httpx.post(
-        f"{SERVICE_URL}/configure",
+        f"{INFERENCE_SRV_URL}/configure",
         json=data
     )
     response.raise_for_status()
 
     if args.debug:
-        response = httpx.get(f"{SERVICE_URL}/toggle-debug")
+        response = httpx.get(f"{INFERENCE_SRV_URL}/toggle-debug")
         response.raise_for_status()
 
     frames = run_capture_loop(debug=args.debug, frame_skip=args.frame_skip, condition=args.condition)
