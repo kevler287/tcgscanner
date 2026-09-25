@@ -1,4 +1,4 @@
-from tcgs.common.text_normalizer import *
+from services.ygo_srv.helper.text_normalizer import *
 
 SINGLE_CHAR_LANG_CODES = {
     "E": "English",

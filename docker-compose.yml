@@ -21,9 +21,9 @@ services:
   ygo_srv:
     build:
       context: .
-      dockerfile: services/tcg_srvs/ygo_srv/Dockerfile
+      dockerfile: services/ygo_srv/Dockerfile
     ports:
       - "8001:8000"
     volumes:
-      - ./services/tcg_srvs/ygo_srv/data:/data
+      - ./services/ygo_srv/data:/data
     restart: unless-stopped

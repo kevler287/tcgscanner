@@ -26,6 +26,12 @@ def letter_to_number(text: str) -> str:
         text = text.replace(l, n)
     return text
 
+def number_to_letter(text: str) -> str:
+    '''Unifies different OCR detections to a common spelling for faster convergence e.g. DE053 & DEOS3'''
+    for l, n in AMBIGUOUS_CHARS.items():
+        text = text.replace(n, l)
+    return text
+
 def insert_dash_before_lang(s: str) -> str:
     return re.sub(r"(DE|EN)(\d+)$", r"-\1\2", s)
 

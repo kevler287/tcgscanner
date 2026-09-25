@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
 
 from tcgs.common.generic_stabilizers import BinaryStabilizer, TextStabilizer
-from tcgs.common.text_normalizer import letter_to_number, insert_dash_before_lang
+from services.ygo_srv.helper.text_normalizer import letter_to_number, insert_dash_before_lang
 from shared.tcg_layout_model import TCGLayoutConfig
 
 class YugiohStabilizer:

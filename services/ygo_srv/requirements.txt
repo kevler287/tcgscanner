@@ -1,3 +1,4 @@
 fastapi==0.138.0
 uvicorn[standard]
 rule-engine==4.5.0
+pandas

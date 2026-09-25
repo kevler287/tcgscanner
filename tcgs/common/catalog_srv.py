@@ -13,7 +13,7 @@ class ProductCatalogService:
         # load as str dtype to avoid type mismatches during comparison later
         return pd.read_csv(path, dtype=str)
     
-    def find_yugioh_card(self, card_name: str, ec_opts: List[str], cn_opts: List[str]):
+    def find_yugioh_card(self, ec_opts: List[str], cn_opts: List[str]):
         remaining_entries = self.catalog[self.catalog["expansionCode"].isin(ec_opts)]
 
         if len(remaining_entries) == 0:

@@ -2,6 +2,8 @@ import csv
 import json
 import os
 
+import pandas as pd
+
 import rule_engine
 
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
@@ -115,3 +117,7 @@ def run_boot_job():
 
     save_catalog(CATALOG_PROCESSED_CSV_PATH, rows, fieldnames)
     print(f"[boot] Processed catalog written to {CATALOG_PROCESSED_CSV_PATH}, {len(rows)} rows")
+
+    catalog_df = pd.read_csv(CATALOG_PROCESSED_CSV_PATH, dtype=str)
+    catalog_df["lang_codes"] = catalog_df["lang_codes"].apply(lambda s: s.split("|") if s else [])
+    return catalog_df
