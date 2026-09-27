@@ -37,7 +37,7 @@ def add_lang_codes_column(rows):
 def split_lang_code(rows):
     for row in rows:
         code = row["expansionCode"]
-        if "-" in code:
+        if "-JP" in code or "-KR" in code:
             base, lang_code = code.split("-", 1)
             row["expansionCode"] = base
             # Overwrite the wildcard default with the specific code (Case 2)
@@ -118,6 +118,6 @@ def run_boot_job():
     save_catalog(CATALOG_PROCESSED_CSV_PATH, rows, fieldnames)
     print(f"[boot] Processed catalog written to {CATALOG_PROCESSED_CSV_PATH}, {len(rows)} rows")
 
-    catalog_df = pd.read_csv(CATALOG_PROCESSED_CSV_PATH, dtype=str)
+    catalog_df = pd.read_csv(CATALOG_PROCESSED_CSV_PATH, dtype=str, keep_default_na=False)
     catalog_df["lang_codes"] = catalog_df["lang_codes"].apply(lambda s: s.split("|") if s else [])
     return catalog_df

@@ -1,8 +1,10 @@
 from typing import List, Optional
 
-from fastapi import Request, Response
+from fastapi import Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from tcgs.yugioh.setcode_resolver import *
+
+from helper.setcode_resolver import *
 
 class ErrorResponse(BaseModel):
     msg: str
@@ -14,7 +16,7 @@ class ErrorResponse(BaseModel):
 def identify_product(request: Request, setcode: str):
     parts = setcode.split("-")
     if len(parts) != 2:
-        return Response(content=f"setcode {setcode} has no hyphen", status_code=500)
+        return JSONResponse(content=f"setcode {setcode} has no hyphen", status_code=500)
 
     expansion_code = parts[0]
     language_code = parts[1][:-3]
@@ -28,20 +30,20 @@ def identify_product(request: Request, setcode: str):
     remaining_entries = catalog_df[catalog_df["expansionCode"].isin(ec_opts)]
 
     if len(remaining_entries) == 0:
-        return Response(status_code=404, content=ErrorResponse(
+        return JSONResponse(status_code=404, content=ErrorResponse(
             msg=f"no products remain after expansioncode filtering",
             setcode_input=setcode,
             expansioncode_options=ec_opts
-        ))
+        ).model_dump())
 
     remaining_entries = remaining_entries[remaining_entries["collectorNumber"].isin(cn_opts)]
     if len(remaining_entries) == 0:
-        return Response(status_code=404, content=ErrorResponse(
+        return JSONResponse(status_code=404, content=ErrorResponse(
             msg=f"no products remain after collectornumber filtering",
             setcode_input=setcode,
             expansioncode_options=ec_opts,
             collectornumber_options=cn_opts
-        ))
+        ).model_dump())
         
     if len(remaining_entries) == 1:
         product = remaining_entries.iloc[0].to_dict()
@@ -60,23 +62,23 @@ def identify_product(request: Request, setcode: str):
         ]
 
     if len(remaining_entries) == 0:
-        return Response(status_code=404, content=ErrorResponse(
+        return JSONResponse(status_code=404, content=ErrorResponse(
             msg=f"no products remain after languagecode filtering",
             setcode_input=setcode,
             expansioncode_options=ec_opts,
             collectornumber_options=cn_opts,
             language_code=language_code
-        ))
+        ).model_dump())
         
     if len(remaining_entries) == 1:
         product = remaining_entries.iloc[0].to_dict()
         product["x-language"] = language
         return product
 
-    return Response(status_code=409, content=ErrorResponse(
+    return JSONResponse(status_code=409, content=ErrorResponse(
         msg=f"{len(remaining_entries)} products remain after languagecode filtering",
         setcode_input=setcode,
         expansioncode_options=ec_opts,
         collectornumber_options=cn_opts,
         language_code=language_code
-    ))
+    ).model_dump())

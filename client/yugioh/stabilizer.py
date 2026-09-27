@@ -36,6 +36,7 @@ class YugiohStabilizer:
         return False, progress
 
     def forward(self, ocr_output: dict, edition_dets: dict):
+        #TODO move autocorrect to ygo-srv
         setcode_dets = [(letter_to_number(sc), prob) for sc, prob in ocr_output.get("set_code", [])]
         for sc_det in setcode_dets:
             if "-" not in sc_det[0]: 

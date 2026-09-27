@@ -39,18 +39,24 @@ def build_progress_panel(product: dict, progress: dict, status: DetectionState, 
 
         center_y = panel_height // 2
 
-        text_size = cv2.getTextSize(text, FONT, 2, 3)[0]
-        text_x = (PANEL_WIDTH - text_size[0]) // 2
         if status == DetectionState.IDENTIFIED:
             exp_code = product["expansionCode"]
-            cn = product['collectorNumber']
-            lang = product['x-language']
-            edition = "1st Edition" if product['x-isfirst'] else "Unlimited"
-            text = f"{exp_code}-{cn}\n{lang}\n{edition}"
-            cv2.putText(panel, text, (text_x, center_y + 20), FONT, 2, status.get_color_gbr(), 3, cv2.LINE_AA)
+            cn = product["collectorNumber"]
+            lang = product["x-language"]
+            edition = "1st Edition" if product["x-isfirst"] else "Unlimited"
+            lines = [f"{exp_code}-{cn}", lang, edition]
         else:
-            text = status.name
-            cv2.putText(panel, text, (text_x, center_y + 20), FONT, 2, status.get_color_gbr(), 3, cv2.LINE_AA)
+            lines = [status.name]
+
+        font_scale = 2
+        thickness = 3
+        line_height = cv2.getTextSize("A", FONT, font_scale, thickness)[0][1] + 15  # + line spacing
+
+        for i, line in enumerate(lines):
+            text_size = cv2.getTextSize(line, FONT, font_scale, thickness)[0]
+            text_x = (PANEL_WIDTH - text_size[0]) // 2
+            text_y = center_y + 20 + i * line_height
+            cv2.putText(panel, line, (text_x, text_y), FONT, font_scale, status.get_color_gbr(), thickness, cv2.LINE_AA)
 
         return panel
     elif status == DetectionState.RUNNING:
@@ -117,17 +123,17 @@ def process_frame(condition: str, frame: np.ndarray, debug: bool):
     first_ed_0 = progress["first_ed_0"][0]
     first_ed_1 = progress["first_ed_1"][0]
     response = httpx.post(
-        f"{INFERENCE_SRV_URL}/search",
+        f"{YGO_SRV_URL}/search",
         json={"set_code": set_code}
     )
     if response.status_code == 500:
         print("ygo-srv crashed")
         return None
     if response.status_code == 404:
-        print(response)
+        print(response.json())
         return build_progress_panel(None, progress, DetectionState.ERRONEOUS, panel_height=frame.shape[0])
     if response.status_code == 409:
-        print(response)
+        print(response.json())
         return build_progress_panel(None, progress, DetectionState.AMBIGUOUS, panel_height=frame.shape[0])
 
     product = response.json()

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Body
 
 import boot
-from handler import product_handler
+from handler import search_handler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,5 +22,5 @@ def health():
     return {"status": "ok"}
 
 @app.post("/search")
-def identify_ygo_card(request: Request, set_code: str = Body(...)):
-    return product_handler.identify_product(request=request, setcode=set_code)
+def identify_ygo_card(request: Request, set_code: str = Body(..., embed=True)):
+    return search_handler.identify_product(request=request, setcode=set_code)

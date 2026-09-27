@@ -1,6 +1,6 @@
 scripts/
 temp/
-debug/
+services/*/data/
 output/
 **/*venv/
 
