@@ -1,6 +1,6 @@
 scripts/
 temp/
-services/*/data/
+services/inference_srv/data/
 output/
 **/*venv/
 
