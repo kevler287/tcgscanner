@@ -37,15 +37,15 @@ class YugiohStabilizer:
 
     def forward(self, ocr_output: dict, edition_dets: dict):
         #TODO move autocorrect to ygo-srv
-        setcode_dets = [(letter_to_number(sc), prob) for sc, prob in ocr_output.get("set_code", [])]
-        for sc_det in setcode_dets:
-            if "-" not in sc_det[0]: 
-                corrected = insert_dash_before_lang(sc_det[0])
-                sc_det = (corrected, sc_det[1])
-            self.setcode_stabilizer.forward(sc_det)
+        sc, prob = ocr_output.get("set_code", ["", 0.0])
+        sc_det = (letter_to_number(sc), prob)
+        if "-" not in sc_det[0]: 
+            corrected = insert_dash_before_lang(sc_det[0])
+            sc_det = (corrected, sc_det[1])
+        self.setcode_stabilizer.forward(sc_det)
 
-        for name_det in ocr_output.get("name", []):
-            self.name_stabilizer.forward(name_det)
+        name, prob = ocr_output.get("name", ["", 0.0])
+        self.name_stabilizer.forward((name, prob))
 
         for loc_name, first_ed_prob in edition_dets.items():
             if loc_name not in self.edition_stabilizers.keys(): continue

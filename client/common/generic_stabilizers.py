@@ -55,6 +55,7 @@ class TextStabilizer(BaseModel):
     def forward(self, new_value: Tuple[str, float]):
         if self.locked:
             return
+        # print(new_value)
         text, conf = new_value
         if conf == 0.0 or len(text) == 0:
             return

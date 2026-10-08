@@ -18,25 +18,14 @@ class TextExtractor:
 
     def extract(self, card_image: np.ndarray):
         h, w, _ = card_image.shape
-        names = []
-        crops = []
+        extracted, named_crops = {}, {}
         for name, pos in self.yugioh_config.ocr_fields.items():
-            y1 = int(h*pos[0][1])
-            y2 = int(h*pos[1][1])
-            x1 = int(w*pos[0][0])
-            x2 = int(w*pos[1][0])
-            crop = card_image[y1:y2, x1:x2]
-            crop = self._preprocess(crop)
-            names.append(name)
-            crops.append(crop)
-
-        raw = self.ocr.ocr(crops, det=False)
-        extracted = {}
-        named_crops = {}
-        for name, result in zip(names, raw):
-            extracted[name] = result
+            y1, y2 = int(h * pos[0][1]), int(h * pos[1][1])
+            x1, x2 = int(w * pos[0][0]), int(w * pos[1][0])
+            crop = self._preprocess(card_image[y1:y2, x1:x2])
+            result = self.ocr.ocr(crop, det=True, rec=True, cls=False)
+            extracted[name] = self._unpack_rec_result(result)
             named_crops[name] = crop
-
         return extracted, named_crops
 
     def _preprocess(self, crop: np.ndarray) -> np.ndarray:
@@ -49,5 +38,29 @@ class TextExtractor:
 
         return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
+    def _unpack_rec_result(self, raw) -> tuple[str, float]:
+        """
+        Expects PaddleOCR output with det=True for ONE image:
+        [[[box, [text, conf]], [box, [text, conf]], ...]]
+        Returns (text, conf) of the first/best line, or ("", 0.0) if nothing was recognized.
+        """
+        try:
+            lines = raw[0]
+            if not lines:
+                return "", 0.0
+            text, conf = lines[0][1]
+            return text, float(conf)
+        except (TypeError, IndexError, KeyError, ValueError) as e:
+            return "", -1
+
     def extract_raw(self, img: np.ndarray):
         return self.ocr.ocr(img)
+
+    def debug_rec_input(self, crop: np.ndarray):
+        rec = self.ocr.text_recognizer
+        h, w = crop.shape[:2]
+        imgC, imgH, imgW = rec.rec_image_shape
+        max_wh_ratio = max(imgW / imgH, w / h)
+        norm_img = rec.resize_norm_img(crop, max_wh_ratio)
+        vis = ((norm_img.transpose(1, 2, 0) * 0.5 + 0.5) * 255).astype(np.uint8)
+        return vis

@@ -126,15 +126,18 @@ def process_frame(condition: str, frame: np.ndarray, debug: bool):
         f"{YGO_SRV_URL}/search",
         json={"set_code": set_code}
     )
-    if response.status_code == 500:
-        print("ygo-srv crashed")
-        return None
-    if response.status_code == 404:
-        print(response.json())
-        return build_progress_panel(None, progress, DetectionState.ERRONEOUS, panel_height=frame.shape[0])
-    if response.status_code == 409:
-        print(response.json())
-        return build_progress_panel(None, progress, DetectionState.AMBIGUOUS, panel_height=frame.shape[0])
+    if response.status_code != 200:
+        stabilizer.clear()
+        ts = time.time()
+        if response.status_code == 500:
+            print("ygo-srv crashed")
+            return None
+        if response.status_code == 404:
+            print(response.json())
+            return build_progress_panel(None, progress, DetectionState.ERRONEOUS, panel_height=frame.shape[0])
+        if response.status_code == 409:
+            print(response.json())
+            return build_progress_panel(None, progress, DetectionState.AMBIGUOUS, panel_height=frame.shape[0])
 
     product = response.json()
     product["x-isfirst"] = first_ed_0 or first_ed_1
