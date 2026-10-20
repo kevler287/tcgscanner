@@ -55,12 +55,3 @@ class TextExtractor:
 
     def extract_raw(self, img: np.ndarray):
         return self.ocr.ocr(img)
-
-    def debug_rec_input(self, crop: np.ndarray):
-        rec = self.ocr.text_recognizer
-        h, w = crop.shape[:2]
-        imgC, imgH, imgW = rec.rec_image_shape
-        max_wh_ratio = max(imgW / imgH, w / h)
-        norm_img = rec.resize_norm_img(crop, max_wh_ratio)
-        vis = ((norm_img.transpose(1, 2, 0) * 0.5 + 0.5) * 255).astype(np.uint8)
-        return vis

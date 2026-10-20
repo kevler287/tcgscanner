@@ -7,36 +7,24 @@ import numpy as np
 
 _DATA_DIR = Path(os.environ["DATA_DIR"])
 
-def new_trace_id() -> str:
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    return str(timestamp)
-
 def get_date_str() -> str:
     timestamp = datetime.now().strftime("%Y_%m_%d")
     return str(timestamp)
 
 def _unit_dir(trace_id: str) -> Path:
     d = _DATA_DIR / trace_id
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+    image_dir = d / "images"
+    label_dir = d / "labels"
+    image_dir.mkdir(parents=True, exist_ok=True)
+    label_dir.mkdir(parents=True, exist_ok=True)
+    return image_dir, label_dir
 
+def collect(crop: np.ndarray, results: dict) -> None:
+    image_dir, label_dir = _unit_dir(get_date_str())
+    index = len(list(image_dir.iterdir()))
 
-def save_frame(trace_id: str, stage_name: str, frame: np.ndarray) -> None:
-    path = _unit_dir(trace_id) / f"{stage_name}.jpg"
-    cv2.imwrite(str(path), frame)
+    im_path = image_dir / f"{index}.jpg"
+    cv2.imwrite(str(im_path), crop)
 
-def save_crop(crop: np.ndarray) -> None:
-    trace_id = get_date_str()
-    d = _unit_dir(trace_id)
-    index = len(list(d.iterdir()))
-    path = d / f"{index}.jpg"
-    cv2.imwrite(str(path), crop)
-
-def save_crops(trace_id: str, stage_name: str, crops: list[np.ndarray]) -> None:
-    for i, crop in enumerate(crops):
-        save_frame(trace_id, f"{stage_name}_{i:02d}", crop)
-
-
-def save_json(trace_id: str, stage_name: str, data: dict) -> None:
-    path = _unit_dir(trace_id) / f"{stage_name}.json"
-    path.write_text(json.dumps(data, indent=2, default=str))
+    lb_path = label_dir / f"{index}.json"
+    lb_path.write_text(json.dumps(results, indent=2, default=str))

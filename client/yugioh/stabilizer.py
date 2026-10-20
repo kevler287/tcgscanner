@@ -10,7 +10,6 @@ class YugiohStabilizer:
         self.config = TCGLayoutConfig.load("shared/yugioh_layout.json")
 
         self.setcode_stabilizer = TextStabilizer(stability_factor=0.7)
-        self.name_stabilizer = TextStabilizer(stability_factor=0.5)
 
         self.edition_stabilizers: Dict[str, BinaryStabilizer] = {}
         for loc_name in self.config.edition_areas.keys():
@@ -22,13 +21,11 @@ class YugiohStabilizer:
     def _new_epoch(self):
         for stab in self.edition_stabilizers.values():
             stab.new_epoch()
-        self.name_stabilizer.new_epoch()
         self.setcode_stabilizer.new_epoch()
 
     def _eval(self):
         progress = {
             "set_code": self.setcode_stabilizer.get_progress(),
-            "name": self.name_stabilizer.get_progress(),
             **{loc_name: stab.get_progress() for loc_name, stab in self.edition_stabilizers.items()}
         }
         if self.setcode_stabilizer.locked and all(stab.locked for stab in self.edition_stabilizers.values()):
@@ -36,16 +33,12 @@ class YugiohStabilizer:
         return False, progress
 
     def forward(self, ocr_output: dict, edition_dets: dict):
-        #TODO move autocorrect to ygo-srv
         sc, prob = ocr_output.get("set_code", ["", 0.0])
         sc_det = (letter_to_number(sc), prob)
         if "-" not in sc_det[0]: 
             corrected = insert_dash_before_lang(sc_det[0])
             sc_det = (corrected, sc_det[1])
         self.setcode_stabilizer.forward(sc_det)
-
-        name, prob = ocr_output.get("name", ["", 0.0])
-        self.name_stabilizer.forward((name, prob))
 
         for loc_name, first_ed_prob in edition_dets.items():
             if loc_name not in self.edition_stabilizers.keys(): continue
@@ -56,7 +49,6 @@ class YugiohStabilizer:
         return self._eval()
     
     def clear(self):
-        self.name_stabilizer.reset()
         self.setcode_stabilizer.reset()
         for stab in self.edition_stabilizers.values():
             stab.reset()
