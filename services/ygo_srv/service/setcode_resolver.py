@@ -1,4 +1,4 @@
-from helper.text_normalizer import *
+from service.text_normalizer import *
 
 SINGLE_CHAR_LANG_CODES = {
     "E": "English",
@@ -34,3 +34,8 @@ def resolve_language_code(language_code: str):
     language_code = number_to_letter(language_code)
     language = LOOKUPS.get(len(language_code), lambda code: None)(language_code)
     return language_code, language
+
+def setcode_correction(product: dict, lang_code: str):
+    exp_code = product["expansionCode"]
+    cn = product["collectorNumber"]
+    return f"{exp_code}-{lang_code}{cn}"

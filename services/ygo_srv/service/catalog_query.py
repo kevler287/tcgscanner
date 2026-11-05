@@ -4,7 +4,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from helper.setcode_resolver import *
+from service.setcode_resolver import *
 
 class ErrorResponse(BaseModel):
     msg: str
@@ -72,6 +72,7 @@ def identify_product(request: Request, setcode: str):
         
     if len(remaining_entries) == 1:
         product = remaining_entries.iloc[0].to_dict()
+        product["x-setcode"] = setcode_correction(product=product, lang_code=language_code)
         product["x-language"] = language
         return product
 
@@ -82,3 +83,4 @@ def identify_product(request: Request, setcode: str):
         collectornumber_options=cn_opts,
         language_code=language_code
     ).model_dump())
+

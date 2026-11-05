@@ -10,6 +10,12 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Install PyTorch with CUDA 11.8 support (GTX 1060) – torch and torchvision as a matching pair
+RUN pip install --no-cache-dir \
+    torch==2.7.1 \
+    torchvision==0.22.1 \
+    --index-url https://download.pytorch.org/whl/cu118
+
 # Install Paddle separately due to custom index URL
 RUN pip install --no-cache-dir \
     paddlepaddle-gpu==2.6.2 \

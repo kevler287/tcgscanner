@@ -29,13 +29,6 @@ async def readiness(request: Request):
         raise HTTPException(status_code=503, detail="Models loading")
     return {"status": "ready"}
 
-@app.get("/toggle-debug")
-async def toggle_debug(request: Request):
-    if not request.app.state.ready:
-        raise HTTPException(status_code=503, detail="Models loading")
-    request.app.state.debug = not request.app.state.debug
-    return {"debug": f"{request.app.state.debug}"}
-
 @app.post("/configure")
 async def configure(request: Request):
     if not request.app.state.ready:
