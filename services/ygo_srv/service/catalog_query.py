@@ -47,6 +47,7 @@ def identify_product(request: Request, setcode: str):
         
     if len(remaining_entries) == 1:
         product = remaining_entries.iloc[0].to_dict()
+        product["x-setcode"] = setcode_correction(product=product, lang_code=language_code)
         product["x-language"] = language
         return product
 
