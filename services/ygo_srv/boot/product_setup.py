@@ -110,7 +110,7 @@ def save_catalog(path, rows, fieldnames):
             writer.writerow(row)
 
 
-def run_boot_job():
+def run_job():
     print(f"[boot] Loading catalog from {CATALOG_CSV_PATH}")
     rows, fieldnames = load_catalog(CATALOG_CSV_PATH)
 

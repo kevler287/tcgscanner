@@ -2,14 +2,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Body
 
-import boot
+from boot import price_setup
+import boot.product_setup as product_setup
 from service import catalog_query
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Runs once before the app starts accepting requests.
-    catalog_df = boot.run_boot_job()
+    catalog_df = product_setup.run_job()
+    price_df = price_setup.run_job()
     app.state.catalog = catalog_df
+    app.state.price = price_df
     yield
     # Place shutdown/cleanup logic here if needed.
 
