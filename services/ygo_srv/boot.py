@@ -21,6 +21,14 @@ def strip_en_collector_number_prefix(rows):
         if row["collectorNumber"].startswith("EN"):
             row["collectorNumber"] = row["collectorNumber"][2:]
 
+def correct_2pl_starter_sets(rows):
+    for row in rows:
+        if row["expansionCode"] == "STAS" and row["collectorNumber"].startswith("X"):
+            row["expansionCode"] = "STAX"
+            row["collectorNumber"] = row["collectorNumber"][1:]
+        elif row["expansionCode"] == "STAS" and row["collectorNumber"].startswith("S"):
+            row["collectorNumber"] = row["collectorNumber"][1:]
+
 def remove_empty_collector_number(rows):
     return [row for row in rows if row["collectorNumber"].strip()]
 
@@ -110,6 +118,7 @@ def run_boot_job():
 
     rows = remove_empty_collector_number(rows)
     remove_25th_suffix(rows)
+    correct_2pl_starter_sets(rows)
     strip_en_collector_number_prefix(rows)
     add_lang_codes_column(rows)
     apply_set_config(rows, set_config)

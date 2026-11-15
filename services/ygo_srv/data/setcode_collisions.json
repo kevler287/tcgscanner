@@ -1,4 +1,11 @@
 {
+  "MFC": [
+    {"copyright": 1996, "lang_codes": [], "condition": "'(' not in name"}
+  ],
+  "LOD": [
+    {"copyright": 1996, "lang_codes": [], "condition": "'V.1' in name"},
+    {"copyright": 1996, "lang_codes": ["EN"], "condition": "'V.2' in name"}
+  ],
   "LOB": [
     {"copyright": 1996, "lang_codes": ["E", "G"], "condition": "'V.1' in name"},
     {"copyright": 1996, "lang_codes": [], "condition": "'V.2' in name"},

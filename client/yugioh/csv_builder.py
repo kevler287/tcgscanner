@@ -25,7 +25,7 @@ class OutputCSVRow:
 
 class YugiohCSVBuilder:
 
-    def __init__(self, dest_path = "output/yugioh/"):
+    def __init__(self, dest_path = "output/"):
         self.dest_path = Path(dest_path)
         self.csv_data: List[OutputCSVRow] = []
 
@@ -42,7 +42,7 @@ class YugiohCSVBuilder:
         ))
 
     def _new_trace_id(self) -> str:
-        timestamp = datetime.now().strftime("%Y%m%d")
+        timestamp = datetime.now().strftime("%Y%m%d_%H-%M")
         return str(timestamp)
 
     def build(self):
