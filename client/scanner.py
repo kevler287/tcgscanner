@@ -17,7 +17,8 @@ from shared.tcg_layout_model import TCGLayoutConfig
 INFERENCE_SRV_URL = "http://localhost:8000"
 
 stabilizer = YugiohStabilizer()
-csv_builder = YugiohCSVBuilder()
+scan_csv_builder = YugiohCSVBuilder(dest_path="output/scan/")
+sift_csv_builder = YugiohCSVBuilder(dest_path="output/sift/")
 config = TCGLayoutConfig.load("shared/yugioh_layout.json")
 
 def parse_args():
@@ -55,7 +56,8 @@ def run_capture_loop(condition: str, debug: bool = False, scan_interval: float =
         condition=condition,
         debug=debug,
         stabilizer=stabilizer,
-        csv_builder=csv_builder,
+        scan_csv_builder=scan_csv_builder,
+        sift_csv_builder=sift_csv_builder,
         min_interval=scan_interval
     )
     last_img = None
@@ -107,7 +109,8 @@ def main():
     except:
         print(traceback.format_exc())
 
-    csv_builder.build()
+    scan_csv_builder.build()
+    sift_csv_builder.build()
 
 if __name__ == "__main__":
     main()

@@ -14,13 +14,14 @@ YGO_SRV_URL = "http://localhost:8001"
 class ScanWorker:
     """Scans the newest submitted frame in the background. Knows nothing about the camera."""
 
-    def __init__(self, condition: str, debug: bool, stabilizer, csv_builder, det_pause_in_s: float = 2, min_interval: float = 0.0):
+    def __init__(self, condition: str, debug: bool, stabilizer, scan_csv_builder, sift_csv_builder, det_pause_in_s: float = 2, min_interval: float = 0.0):
         self._http = httpx.Client(timeout=10)
         self.det_pause_in_s = det_pause_in_s
         self.condition = condition
         self.debug = debug
         self.stabilizer = stabilizer
-        self.csv_builder = csv_builder
+        self.scan_csv_builder = scan_csv_builder
+        self.sift_csv_builder = sift_csv_builder
         self.t_scan = None
 
         self._state = DetectionState.RUNNING
@@ -87,7 +88,7 @@ class ScanWorker:
         response.raise_for_status()
         return response.json()
 
-    def _call_knowledge_srv(self, set_code: str):
+    def _identify_product(self, set_code: str):
         response = self._http.post(f"{YGO_SRV_URL}/search", json={"set_code": set_code})
         if response.status_code == 200:
             return DetectionState.IDENTIFIED, response.json()
@@ -97,6 +98,13 @@ class ScanWorker:
         if response.status_code == 404:
             return DetectionState.ERRONEOUS, None
         return None, None
+
+    def _get_price_for_product(self, product_id: str):
+        response = self._http.get(f"{YGO_SRV_URL}/price/{product_id}")
+        if response.status_code == 200:
+            return response.json()
+        print(response.json())
+        return {}
 
     def _process_frame(self, frame: np.ndarray):
         # when timer is set (=card was detected) wait 2 sec for new card before scanning
@@ -113,7 +121,7 @@ class ScanWorker:
             return
 
         set_code = progress["set_code"][0]
-        state, resp = self._call_knowledge_srv(set_code=set_code)
+        state, resp = self._identify_product(set_code=set_code)
 
         self.stabilizer.clear()
         self.t_scan = time.time()
@@ -124,11 +132,17 @@ class ScanWorker:
                 self._state = state
             return
 
+        product_id = resp["cardmarketId"]
+        price_info = self._get_price_for_product(product_id=product_id)
+        resp["trend"] = price_info.get("trend", -1)
         first_ed_0 = progress["first_ed_0"][0]
         first_ed_1 = progress["first_ed_1"][0]
         resp["x-isfirst"] = first_ed_0 or first_ed_1
         resp["x-condition"] = self.condition
-        self.csv_builder.append(product=resp)
+        if resp["trend"] < 0.1:
+            self.sift_csv_builder.append(product=resp)
+        else:
+            self.scan_csv_builder.append(product=resp)
 
         with self._lock:
             self._product = resp

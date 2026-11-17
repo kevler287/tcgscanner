@@ -13,6 +13,13 @@ class ErrorResponse(BaseModel):
     collectornumber_options: Optional[List[str]] = None
     language_code: Optional[str] = None
 
+def get_price_for_product(request: Request, product_id: str):
+    price_df = request.app.state.price
+    product_row = price_df[price_df["idProduct"] == product_id]
+    if len(product_row) == 0:
+        return None
+    return product_row.iloc[0].to_dict()
+
 def identify_product(request: Request, setcode: str):
     parts = setcode.split("-")
     if len(parts) != 2:

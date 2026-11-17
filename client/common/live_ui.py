@@ -17,7 +17,8 @@ def build_progress_panel(progress: dict, status: DetectionState, product: dict, 
 
         if status == DetectionState.IDENTIFIED:
             edition = "1st Edition" if product["x-isfirst"] else "Unlimited"
-            lines = [product["x-setcode"], edition]
+            price = str(product.get("trend", -1))
+            lines = [product["x-setcode"], edition, f"{price}€"]
         else:
             lines = [status.name]
 

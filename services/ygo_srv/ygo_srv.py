@@ -27,3 +27,7 @@ def health():
 @app.post("/search")
 def identify_ygo_card(request: Request, set_code: str = Body(..., embed=True)):
     return catalog_query.identify_product(request=request, setcode=set_code)
+
+@app.get("/price/{product_id}")
+def get_price(request: Request, product_id: str):
+    return catalog_query.get_price_for_product(request=request, product_id=product_id)
